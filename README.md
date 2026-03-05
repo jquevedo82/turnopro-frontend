@@ -278,4 +278,4 @@ npm run lint      # ESLint sobre todo src/
 
 ## Relacionado
 
-- [turnopro-backend](../turnopro-backend) — API NestJS + TypeORM + MySQL
+- [turnopro-backend](https://github.com/jquevedo82/turnopro-backend) — API NestJS + TypeORM + MySQL
