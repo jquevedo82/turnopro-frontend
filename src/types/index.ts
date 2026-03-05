@@ -1,0 +1,23 @@
+export interface Plan { id: number; name: string; price: number; durationDays: number; isActive: boolean }
+export interface Professional {
+  id: number; name: string; email: string; phone: string; profession: string; slug: string
+  slogan: string; bio: string; address: string; publicEmail: string; avatar: string | null
+  logo: string | null; instagram: string; facebook: string; gallery: string[]
+  plan: Plan | null; planId: number | null; subscriptionStart: string | null; subscriptionEnd: string | null
+  isActive: boolean; autoConfirm: boolean; slotDurationMinutes: number; bufferMinutes: number
+  minAdvanceHours: number; maxAdvanceDays: number; cancellationHours: number; pendingExpiryHours: number; createdAt: string
+}
+export interface Service { id: number; professionalId: number; name: string; description: string; durationMinutes: number; bufferMinutes: number | null; isActive: boolean }
+export interface ProfessionalSchedule { id: number; professionalId: number; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }
+export interface ScheduleException { id: number; professionalId: number; date: string; isClosed: boolean; customStartTime: string | null; customEndTime: string | null; reason: string }
+export interface Client { id: number; professionalId: number; name: string; email: string; phone: string; createdAt: string }
+export type AppointmentStatus = "pending"|"confirmed"|"reconfirmed"|"cancelled"|"rejected"|"expired"|"completed"|"no_show"
+export interface Appointment {
+  id: number; professionalId: number; clientId: number; serviceId: number
+  date: string; startTime: string; endTime: string; status: AppointmentStatus
+  cancelledBy: "client"|"professional"|null; token: string; tokenUsedAt: string | null
+  reminderSent: boolean; reconfirmedAt: string | null; reconfirmedBy: "client"|"professional"|null
+  notes: string | null; createdAt: string; client: Client; service: Service; professional: Professional
+}
+export interface AuthUser { id: number; email: string; role: "superadmin"|"professional"; name?: string; slug?: string }
+export interface LoginResponse { accessToken: string; user: AuthUser }
