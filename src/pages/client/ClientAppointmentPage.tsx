@@ -1,20 +1,29 @@
 /**
  * ClientAppointmentPage.tsx — Mobile-first.
- * URL: /cita/:token
+ * URL: /cita/:token          — ver cita
+ * URL: /cita/:token/cancelar — cancelar directo desde el link del email
  */
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppointmentByToken } from "@/hooks/useAppointments";
 import { appointmentsApi } from "@/api/appointments.api";
 import { PageLoader } from "@/components/ui/Spinner";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatDate } from "@/utils/dates";
 
-export const ClientAppointmentPage = () => {
+export const ClientAppointmentPage = ({ autoCancel = false }: { autoCancel?: boolean }) => {
   const { token = "" } = useParams<{ token: string }>();
   const { data: appt, isLoading, refetch } = useAppointmentByToken(token);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  // Si viene de /cancelar en el email, ejecuta la cancelación automáticamente
+  useEffect(() => {
+    if (autoCancel && appt && !message) {
+      action("cancel");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCancel, appt?.id]);
 
   const action = async (type: "reconfirm" | "cancel") => {
     setLoading(true);

@@ -46,6 +46,7 @@ export default function App() {
       {/* ── Sin autenticación ──────────────────────────────────────────── */}
       <Route path="/login"      element={<LoginPage />} />
       <Route path="/cita/:token" element={<ClientAppointmentPage />} />
+      <Route path="/cita/:token/cancelar" element={<ClientAppointmentPage autoCancel />} />
       {/* Página pública del profesional */}
       <Route path="/:slug"      element={<PublicPage />} />
 

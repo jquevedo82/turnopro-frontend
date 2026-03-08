@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { useTomorrow, useMarkReminder } from "@/hooks/useAppointments";
-import { PageLoader } from "@/components/ui/Spinner";
+import { PageLoader, Spinner } from "@/components/ui/Spinner";
+import { StatusBadge } from "@/components/ui/Badge";
 import { formatDate } from "@/utils/dates";
 import type { Appointment } from "@/types";
 import { useAuthStore } from "@/store/auth.store";
+import { appointmentsApi } from "@/api/appointments.api";
+import toast from "@/utils/toast";
 
 export const TomorrowPage = () => {
   const { data: appointments = [], isLoading } = useTomorrow();
@@ -26,7 +30,7 @@ export const TomorrowPage = () => {
     return `https://wa.me/${phone}?text=${msg}`;
   };
 
-  const handleSend = (appt: Appointment) => {
+  const handleWA = (appt: Appointment) => {
     window.open(buildWALink(appt), "_blank");
     markReminder.mutate(appt.id);
   };
@@ -59,26 +63,11 @@ export const TomorrowPage = () => {
             </div>
           ) : (
             appointments.map((appt) => (
-              <div key={appt.id} className="px-4 py-3.5 border-b border-gray-100 last:border-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="font-display text-base font-bold flex-shrink-0" style={{ color: "#0f2342" }}>
-                      {appt.startTime}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-sm text-gray-900 truncate">{appt.client?.name}</div>
-                      <div className="text-xs text-gray-400">📱 {appt.client?.phone}</div>
-                    </div>
-                  </div>
-                  {appt.reminderSent
-                    ? <span className="badge badge-teal flex-shrink-0">✓ Enviado</span>
-                    : <button onClick={() => handleSend(appt)}
-                        className="btn btn-wa btn-sm flex-shrink-0">
-                        💬 WhatsApp
-                      </button>
-                  }
-                </div>
-              </div>
+              <AppointmentRow
+                key={appt.id}
+                appt={appt}
+                onWA={() => handleWA(appt)}
+              />
             ))
           )}
         </div>
@@ -86,6 +75,60 @@ export const TomorrowPage = () => {
       <p className="text-xs text-gray-400 text-center mt-4 px-4">
         Al pulsar WhatsApp se abrirá el chat con el mensaje pre-cargado
       </p>
+    </div>
+  );
+};
+
+// ── Fila de cita ──────────────────────────────────────────────────────────────
+const AppointmentRow = ({ appt, onWA }: { appt: Appointment; onWA: () => void }) => {
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const isDone = ["cancelled", "completed", "expired"].includes(appt.status);
+
+  const handleEmail = async () => {
+    setLoadingEmail(true);
+    try {
+      await appointmentsApi.sendReminder(appt.id);
+      toast.success("Email enviado");
+    } catch {
+      toast.error("No se pudo enviar el email");
+    } finally {
+      setLoadingEmail(false);
+    }
+  };
+
+  return (
+    <div className="px-4 py-3.5 border-b border-gray-100 last:border-0">
+      {/* Fila principal */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-display text-base font-bold flex-shrink-0" style={{ color: "#0f2342" }}>
+            {appt.startTime?.substring(0,5)}
+          </span>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm text-gray-900 truncate">{appt.client?.name}</div>
+            <div className="text-xs text-gray-400 truncate">📱 {appt.client?.phone}</div>
+          </div>
+        </div>
+        <StatusBadge status={appt.status} />
+      </div>
+
+      {/* Botones de recordatorio — solo si no está cancelada/completada */}
+      {!isDone && (
+        <div className="flex gap-2 mt-2 ml-11">
+    <>
+              <button onClick={handleEmail} disabled={loadingEmail}
+                className="btn btn-xs btn-outline">
+                {loadingEmail ? <Spinner size="sm" /> : "📧 Email"}
+              </button>
+              <button onClick={onWA} className="btn btn-xs btn-wa">
+                💬 WhatsApp
+              </button>
+              {appt.reminderSent && (
+                <span className="text-xs text-teal-600">✓ Enviado</span>
+              )}
+            </>
+        </div>
+      )}
     </div>
   );
 };
