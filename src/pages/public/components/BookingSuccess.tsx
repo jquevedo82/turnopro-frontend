@@ -29,7 +29,21 @@ export const BookingSuccess = ({ appointment, professional, onNew }: Props) => (
           </div>
         ))}
       </div>
-      <button onClick={onNew} className="btn btn-outline">Reservar otra cita</button>
+      {/* WhatsApp al profesional */}
+      {(professional.whatsappPhone || professional.phone) && (
+        <a
+          href={`https://wa.me/${(professional.whatsappPhone || professional.phone).replace(/[^0-9+]/g, "")}?text=${encodeURIComponent(
+            `Hola ${professional.name}, reservé una cita para el ${appointment.date} a las ${appointment.startTime?.substring(0,5)}hs.`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm text-white mb-3"
+          style={{ background: "#25d366" }}
+        >
+          💬 Escribir al profesional por WhatsApp
+        </a>
+      )}
+      <button onClick={onNew} className="btn btn-outline w-full">Reservar otra cita</button>
     </div>
   </div>
 );

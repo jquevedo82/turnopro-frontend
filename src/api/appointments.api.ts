@@ -18,5 +18,5 @@ export const appointmentsApi = {
   complete:     (id: number) => api.post<Appointment>(`/appointments/${id}/complete`).then((r) => r.data),
   cancel:       (id: number) => api.post<Appointment>(`/appointments/${id}/cancel`).then((r) => r.data),
   markReminder:  (id: number) => api.post<Appointment>(`/appointments/${id}/reminder`).then((r) => r.data),
-  sendReminder:  (id: number) => api.post<Appointment>(`/appointments/${id}/reminder`).then((r) => r.data),
+  sendReminder:  (id: number) => api.post<Appointment>(`/appointments/${id}/resend-email`).then((r) => r.data),
 };

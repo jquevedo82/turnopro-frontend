@@ -114,6 +114,21 @@ export const ClientAppointmentPage = () => {
           </div>
         )}
 
+        {/* Botón WhatsApp al profesional */}
+        {appt.professional?.whatsappPhone || appt.professional?.phone ? (
+          <a
+            href={`https://wa.me/${(appt.professional.whatsappPhone || appt.professional.phone).replace(/[^0-9+]/g, '')}?text=${encodeURIComponent(
+              `Hola ${appt.professional?.name}, le escribo por mi cita del ${appt.date} a las ${appt.startTime?.substring(0,5)}hs.`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm text-white mt-2"
+            style={{ background: "#25d366" }}
+          >
+            💬 Escribir al profesional por WhatsApp
+          </a>
+        ) : null}
+
         <p className="text-center text-xs text-gray-400 pb-4">
           TurnoPro • Tu turno en un clic
         </p>

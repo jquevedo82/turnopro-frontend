@@ -32,7 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <App />
       </BrowserRouter>
       {/* DevTools: solo visible en desarrollo */}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   </React.StrictMode>,
 )
