@@ -1,7 +1,3 @@
-/**
- * TomorrowPage.tsx — Agenda de mañana con envío de recordatorios WhatsApp.
- * El botón "Enviar WhatsApp" abre wa.me con el mensaje pre-cargado.
- */
 import { useTomorrow, useMarkReminder } from "@/hooks/useAppointments";
 import { PageLoader } from "@/components/ui/Spinner";
 import { formatDate } from "@/utils/dates";
@@ -17,28 +13,15 @@ export const TomorrowPage = () => {
 
   const buildWALink = (appt: Appointment) => {
     const phone   = appt.client?.phone?.replace(/[^0-9+]/g, "") ?? "";
-    const name    = appt.client?.name ?? "";
-    const proName = user?.name ?? "";
     const appUrl  = import.meta.env.VITE_APP_URL || window.location.origin;
-    const confirmLink = `${appUrl}/cita/${appt.token}/reconfirmar`;
-    const cancelLink  = `${appUrl}/cita/${appt.token}/cancelar`;
-    const tomorrow    = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateStr = tomorrow.toLocaleDateString("es-ES", { weekday:"long", day:"numeric", month:"long" });
-
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateStr  = tomorrow.toLocaleDateString("es-ES", { weekday:"long", day:"numeric", month:"long" });
     const msg = encodeURIComponent(
-      `Hola ${name}! 👋 Te recordamos tu cita mañana:
-
-` +
-      `📅 ${dateStr}
-⏰ ${appt.startTime}hs
-👨‍⚕️ ${proName}
-
-` +
-      `¿Vas a asistir?
-
-` +
-      `✅ SÍ confirmo → ${confirmLink}
-❌ No puedo ir → ${cancelLink}`
+      `Hola ${appt.client?.name}! 👋 Te recordamos tu cita mañana:\n\n` +
+      `📅 ${dateStr}\n⏰ ${appt.startTime}hs\n👨‍⚕️ ${user?.name}\n\n` +
+      `¿Vas a asistir?\n\n` +
+      `✅ Confirmar → ${appUrl}/cita/${appt.token}/reconfirmar\n` +
+      `❌ Cancelar  → ${appUrl}/cita/${appt.token}/cancelar`
     );
     return `https://wa.me/${phone}?text=${msg}`;
   };
@@ -53,16 +36,16 @@ export const TomorrowPage = () => {
       <div className="section-hd">
         <div>
           <h1 className="page-title">🌅 Agenda de mañana</h1>
-          <p className="text-sm text-gray-400 mt-1">{formatDate(
+          <p className="text-xs text-gray-400 mt-0.5">{formatDate(
             new Date(Date.now() + 86400000).toISOString().split("T")[0]
           )}</p>
         </div>
       </div>
 
       {pendingCount > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-3.5 mb-5">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4">
           <p className="text-sm text-blue-800">
-            📋 Tenés <strong>{pendingCount} paciente{pendingCount > 1 ? "s" : ""}</strong> sin recordatorio enviado
+            📋 <strong>{pendingCount}</strong> paciente{pendingCount > 1 ? "s" : ""} sin recordatorio
           </p>
         </div>
       )}
@@ -70,26 +53,29 @@ export const TomorrowPage = () => {
       {isLoading ? <PageLoader /> : (
         <div className="card">
           {appointments.length === 0 ? (
-            <div className="py-16 text-center text-gray-400">
+            <div className="py-12 text-center text-gray-400">
               <div className="text-4xl mb-3">✨</div>
-              <p className="font-medium">No hay citas para mañana</p>
+              <p className="text-sm font-medium">No hay citas para mañana</p>
             </div>
           ) : (
             appointments.map((appt) => (
-              <div key={appt.id} className="flex items-center gap-4 px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/60 transition-colors">
-                <div className="font-display text-lg font-bold w-14 flex-shrink-0" style={{ color: "#0f2342" }}>
-                  {appt.startTime}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-gray-900">{appt.client?.name}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    {appt.service?.name} · 📱 {appt.client?.phone}
+              <div key={appt.id} className="px-4 py-3.5 border-b border-gray-100 last:border-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="font-display text-base font-bold flex-shrink-0" style={{ color: "#0f2342" }}>
+                      {appt.startTime}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm text-gray-900 truncate">{appt.client?.name}</div>
+                      <div className="text-xs text-gray-400">📱 {appt.client?.phone}</div>
+                    </div>
                   </div>
-                </div>
-                <div>
                   {appt.reminderSent
-                    ? <span className="badge badge-teal">📨 Enviado</span>
-                    : <button onClick={() => handleSend(appt)} className="btn btn-wa btn-sm">💬 Enviar WhatsApp</button>
+                    ? <span className="badge badge-teal flex-shrink-0">✓ Enviado</span>
+                    : <button onClick={() => handleSend(appt)}
+                        className="btn btn-wa btn-sm flex-shrink-0">
+                        💬 WhatsApp
+                      </button>
                   }
                 </div>
               </div>
@@ -97,8 +83,8 @@ export const TomorrowPage = () => {
           )}
         </div>
       )}
-      <p className="text-xs text-gray-400 text-center mt-4">
-        Al pulsar "Enviar WhatsApp" se abrirá el chat del paciente con el mensaje pre-cargado
+      <p className="text-xs text-gray-400 text-center mt-4 px-4">
+        Al pulsar WhatsApp se abrirá el chat con el mensaje pre-cargado
       </p>
     </div>
   );

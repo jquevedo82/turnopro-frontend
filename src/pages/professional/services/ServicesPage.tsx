@@ -16,10 +16,16 @@ export const ServicesPage = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ServiceForm>();
 
   const onSubmit = async (data: ServiceForm) => {
+    // Convertir a número explícitamente — los inputs siempre devuelven strings
+    const payload = {
+      ...data,
+      durationMinutes: Number(data.durationMinutes),
+      bufferMinutes:   data.bufferMinutes ? Number(data.bufferMinutes) : undefined,
+    };
     if (editing) {
-      await updateSvc.mutateAsync({ id: editing.id, data });
+      await updateSvc.mutateAsync({ id: editing.id, data: payload });
     } else {
-      await createSvc.mutateAsync(data);
+      await createSvc.mutateAsync(payload);
     }
     reset(); setShowForm(false); setEditing(null);
   };
@@ -92,3 +98,4 @@ export const ServicesPage = () => {
     </div>
   );
 };
+

@@ -49,3 +49,12 @@ export const useMarkReminder = () => {
 
 export const useCreateAppointment = () =>
   useMutation({ mutationFn: appointmentsApi.create });
+
+export const useSendReminder = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.sendReminder(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); toast.success("Recordatorio enviado"); },
+    onError: () => toast.error("Error al enviar"),
+  });
+};

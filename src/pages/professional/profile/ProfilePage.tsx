@@ -14,6 +14,7 @@ interface ProfileForm {
   name:               string;
   profession:         string;
   phone:              string;
+  whatsappPhone:      string;
   slogan:             string;
   bio:                string;
   address:            string;
@@ -61,6 +62,7 @@ export const ProfilePage = () => {
       name:               prof.name               ?? "",
       profession:         prof.profession         ?? "",
       phone:              prof.phone              ?? "",
+      whatsappPhone:      prof.whatsappPhone      ?? "",
       slogan:             prof.slogan             ?? "",
       bio:                prof.bio                ?? "",
       address:            prof.address            ?? "",
@@ -141,8 +143,13 @@ export const ProfilePage = () => {
               <textarea {...register("bio")} className="form-input" rows={3} />
             </div>
             <div>
-              <label className="form-label">Teléfono</label>
+              <label className="form-label">Teléfono público</label>
               <input {...register("phone")} className="form-input" placeholder="+54 11 1234-5678" />
+            </div>
+            <div>
+              <label className="form-label">WhatsApp (notificaciones)</label>
+              <input {...register("whatsappPhone")} className="form-input" placeholder="+54 11 1234-5678" />
+              <p className="text-xs text-gray-400 mt-1">📲 A este número te llegan los avisos de nuevas citas</p>
             </div>
             <div>
               <label className="form-label">Email público</label>

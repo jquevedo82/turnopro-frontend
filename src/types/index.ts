@@ -1,6 +1,6 @@
 export interface Plan { id: number; name: string; price: number; durationDays: number; isActive: boolean }
 export interface Professional {
-  id: number; name: string; email: string; phone: string; profession: string; slug: string
+  id: number; name: string; email: string; phone: string; whatsappPhone: string; profession: string; slug: string
   slogan: string; bio: string; address: string; publicEmail: string; avatar: string | null
   logo: string | null; instagram: string; facebook: string; gallery: string[]
   plan: Plan | null; planId: number | null; subscriptionStart: string | null; subscriptionEnd: string | null

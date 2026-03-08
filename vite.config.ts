@@ -9,6 +9,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true,  // ← agregar esta línea
     // Proxy para evitar CORS en desarrollo
     // Para cambiar el puerto del backend: modificar target
     proxy: {

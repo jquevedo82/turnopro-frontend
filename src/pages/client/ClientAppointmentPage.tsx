@@ -1,8 +1,6 @@
 /**
- * ClientAppointmentPage.tsx
- * Página de gestión de cita para el cliente. Acceso via token único.
+ * ClientAppointmentPage.tsx — Mobile-first.
  * URL: /cita/:token
- * Permite ver el estado, reconfirmar y cancelar.
  */
 import { useParams } from "react-router-dom";
 import { useState } from "react";
@@ -15,137 +13,110 @@ import { formatDate } from "@/utils/dates";
 export const ClientAppointmentPage = () => {
   const { token = "" } = useParams<{ token: string }>();
   const { data: appt, isLoading, refetch } = useAppointmentByToken(token);
-  const [loading,  setLoading]  = useState(false);
-  const [message,  setMessage]  = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const action = async (type: "reconfirm" | "cancel") => {
+    setLoading(true);
+    try {
+      if (type === "reconfirm") await appointmentsApi.reconfirmByToken(token);
+      else                      await appointmentsApi.cancelByToken(token);
+      await refetch();
+      setMessage(type === "reconfirm" ? "✅ Tu cita fue confirmada" : "Tu cita fue cancelada");
+    } catch (e: any) {
+      setMessage(e.response?.data?.message || "Ocurrió un error. Intentá de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (isLoading) return <PageLoader />;
   if (!appt) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center text-gray-400">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+      <div className="text-center">
         <div className="text-5xl mb-4">🔍</div>
         <p className="font-display text-xl text-gray-600">Cita no encontrada</p>
+        <p className="text-sm text-gray-400 mt-2">Verificá el link que recibiste por email</p>
       </div>
     </div>
   );
 
-  const { client, service, professional } = appt;
-  const now = new Date();
-  const apptTime = new Date(`${appt.date}T${appt.startTime}`);
-  const hoursUntil = (apptTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-  const canCancel  = hoursUntil >= professional.cancellationHours && ["confirmed","pending","reconfirmed"].includes(appt.status);
-  const canReconfirm = appt.status === "confirmed";
-
-  const handleReconfirm = async () => {
-    setLoading(true);
-    await appointmentsApi.reconfirmByToken(token);
-    await refetch();
-    setMessage("✅ ¡Confirmado! Nos vemos pronto.");
-    setLoading(false);
-  };
-
-  const handleCancel = async () => {
-    if (!confirm("¿Seguro que querés cancelar la cita?")) return;
-    setLoading(true);
-    try {
-      await appointmentsApi.cancelByToken(token);
-      await refetch();
-      setMessage("Tu cita fue cancelada. Podés reservar una nueva cuando quieras.");
-    } catch (err: any) {
-      setMessage(err.response?.data?.message || "No se pudo cancelar la cita.");
-    }
-    setLoading(false);
-  };
-
-  const isCancelled = ["cancelled","rejected","expired"].includes(appt.status);
+  const isCancelled = appt.status === "cancelled";
+  const isCompleted = ["completed", "no_show"].includes(appt.status);
+  const canAct      = !isCancelled && !isCompleted && appt.status !== "expired";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white p-4">
-      <div className="max-w-md mx-auto pt-8">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="font-display text-2xl font-bold text-navy-DEFAULT mb-1" style={{ color: "#0f2342" }}>
-            Turno<span className="text-blue-600">Pro</span>
-          </div>
-          <p className="text-gray-400 text-sm">Gestión de tu cita</p>
-        </div>
+    <div className="min-h-screen bg-gray-50" style={{ background: "linear-gradient(180deg, #f0f5ff 0%, #f9fafb 100%)" }}>
 
-        {/* Estado */}
-        {isCancelled && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 mb-4 text-center">
-            <p className="text-red-700 font-semibold text-sm">Esta cita fue cancelada o expiró</p>
-          </div>
-        )}
+      {/* Header */}
+      <div style={{ background: "linear-gradient(135deg, #0f2342 0%, #1a3a6b 100%)" }} className="text-white px-4 py-8 text-center">
+        <div className="text-4xl mb-3">📅</div>
+        <h1 className="font-display text-2xl font-bold">Tu cita</h1>
+        <p className="text-blue-300 text-sm mt-1">Podés confirmar o cancelar desde acá</p>
+      </div>
 
-        {message && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 mb-4 text-center">
-            <p className="text-blue-700 text-sm">{message}</p>
-          </div>
-        )}
+      <div className="max-w-sm mx-auto px-4 py-6 space-y-4">
 
-        {/* Detalle */}
-        <div className="card mb-4">
-          <div className="card-header">
-            <span className="card-title">Detalle de tu cita</span>
+        {/* Card de la cita */}
+        <div className="card overflow-hidden">
+          <div className="bg-blue-50 px-5 py-3 border-b border-blue-100 flex items-center justify-between">
+            <span className="text-sm font-semibold text-blue-800">Estado de tu cita</span>
             <StatusBadge status={appt.status} />
           </div>
-          <div className="card-body space-y-4">
+          <div className="divide-y divide-gray-100">
             {[
-              { icon: "👤", label: "Paciente",    val: client?.name },
-              { icon: "🩺", label: "Servicio",    val: service?.name },
-              { icon: "📅", label: "Fecha",       val: formatDate(appt.date) },
-              { icon: "⏰", label: "Hora",        val: `${appt.startTime}hs` },
-              { icon: "👨‍⚕️", label: "Profesional", val: professional?.name },
-              { icon: "📍", label: "Dirección",   val: professional?.address },
-            ].filter(r => r.val).map(({ icon, label, val }) => (
-              <div key={label} className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-base flex-shrink-0">{icon}</div>
+              { icon: "👨‍⚕️", label: "Profesional", value: appt.professional?.name },
+              { icon: "🩺", label: "Servicio",     value: appt.service?.name },
+              { icon: "📅", label: "Fecha",        value: formatDate(appt.date) },
+              { icon: "⏰", label: "Hora",         value: `${appt.startTime}hs` },
+              { icon: "📍", label: "Dirección",    value: appt.professional?.address },
+              { icon: "📞", label: "Teléfono",     value: appt.professional?.phone },
+            ].filter((r) => r.value).map((row) => (
+              <div key={row.label} className="flex items-center gap-3 px-5 py-3">
+                <span className="text-lg flex-shrink-0">{row.icon}</span>
                 <div>
-                  <div className="text-xs text-gray-400 font-semibold uppercase tracking-wide">{label}</div>
-                  <div className="text-sm font-medium text-gray-800 mt-0.5">{val}</div>
+                  <div className="text-xs text-gray-400">{row.label}</div>
+                  <div className="text-sm font-medium text-gray-900">{row.value}</div>
                 </div>
               </div>
             ))}
-            {appt.notes && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs text-gray-400 mb-1">Nota:</div>
-                <div className="text-sm text-gray-700">{appt.notes}</div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Acciones */}
-        {!isCancelled && !message && (
-          <div className="space-y-3">
-            {canReconfirm && (
-              <button onClick={handleReconfirm} disabled={loading} className="btn btn-success btn-full">
-                ✅ Confirmar asistencia
-              </button>
-            )}
-            {appt.status === "reconfirmed" && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4 text-center">
-                <p className="text-emerald-700 font-semibold text-sm">✓ Asistencia confirmada</p>
-              </div>
-            )}
-            {canCancel && (
-              <button onClick={handleCancel} disabled={loading} className="btn btn-outline btn-full text-red-500 border-red-200 hover:bg-red-50">
-                ✕ Cancelar cita
-              </button>
-            )}
-            {!canCancel && !isCancelled && hoursUntil < professional.cancellationHours && (
-              <p className="text-xs text-gray-400 text-center">
-                El plazo de cancelación ya venció ({professional.cancellationHours}hs de anticipación)
-              </p>
-            )}
+        {/* Mensaje feedback */}
+        {message && (
+          <div className={`rounded-xl px-4 py-3 text-sm font-medium text-center ${
+            message.startsWith("✅") ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
+          }`}>
+            {message}
           </div>
         )}
 
-        {/* Volver a reservar */}
-        {isCancelled && (
-          <a href={`/${professional.slug}`} className="btn btn-primary btn-full mt-2">
-            Reservar nueva cita
-          </a>
+        {/* Acciones */}
+        {canAct && !message && (
+          <div className="space-y-2.5">
+            {appt.status !== "reconfirmed" && (
+              <button onClick={() => action("reconfirm")} disabled={loading}
+                className="btn btn-success btn-full">
+                {loading ? "Procesando..." : "✅ Confirmar mi asistencia"}
+              </button>
+            )}
+            <button onClick={() => action("cancel")} disabled={loading}
+              className="btn btn-outline btn-full text-red-500 border-red-200 hover:bg-red-50">
+              ❌ Cancelar la cita
+            </button>
+          </div>
         )}
+
+        {isCancelled && (
+          <div className="text-center py-4 text-gray-400 text-sm">
+            Esta cita fue cancelada.
+          </div>
+        )}
+
+        <p className="text-center text-xs text-gray-400 pb-4">
+          TurnoPro • Tu turno en un clic
+        </p>
       </div>
     </div>
   );

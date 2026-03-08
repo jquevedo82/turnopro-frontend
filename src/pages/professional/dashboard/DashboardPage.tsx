@@ -1,27 +1,60 @@
 /**
- * DashboardPage.tsx — Agenda de hoy del profesional.
- * Muestra las citas del día con sus estados y acciones rápidas.
+ * DashboardPage.tsx
+ * - Compartir página: email vía backend / WhatsApp con modal de número
+ * - Reenviar al paciente: email vía backend (reminder) / WhatsApp con modal
+ * - Fix dropdown: usa portal fixed para no quedar cortado por overflow-hidden
  */
-import { useState } from "react";
-import { useToday, useCancelAppointment, useCompleteAppointment } from "@/hooks/useAppointments";
+import { useState, useRef, useEffect } from "react";
+import { useToday, useCancelAppointment, useCompleteAppointment, useConfirmAppointment } from "@/hooks/useAppointments";
 import { StatusBadge } from "@/components/ui/Badge";
-import { PageLoader } from "@/components/ui/Spinner";
+import { PageLoader, Spinner } from "@/components/ui/Spinner";
 import { formatDate, today } from "@/utils/dates";
+import { useAuthStore } from "@/store/auth.store";
+import { appointmentsApi } from "@/api/appointments.api";
+import { professionalsApi } from "@/api/professionals.api";
+import toast from "@/utils/toast";
 import type { Appointment } from "@/types";
 
-export const DashboardPage = () => {
-  const [date, setDate] = useState(today());
-  const { data: appointments = [], isLoading } = useToday(date);
-  const cancelAppt   = useCancelAppointment();
-  const completeAppt = useCompleteAppointment();
+// ── Modal genérico ────────────────────────────────────────────────────────────
+const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
+  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+    onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <span className="font-semibold text-gray-900 text-sm">{title}</span>
+        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100">✕</button>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  </div>
+);
 
-  const noResponse = appointments.filter((a) => a.status === "confirmed" && !a.reminderSent);
+// ── Validación de email ───────────────────────────────────────────────────────
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+const isValidPhone = (v: string) => /^\+?[0-9]{8,15}$/.test(v.replace(/\s/g, ""));
+
+// ── Componente principal ──────────────────────────────────────────────────────
+export const DashboardPage = () => {
+  const [date, setDate]         = useState(today());
+  const { data: appointments = [], isLoading } = useToday(date);
+  const { user }                = useAuthStore();
+  const cancelAppt              = useCancelAppointment();
+  const completeAppt            = useCompleteAppointment();
+  const confirmAppt             = useConfirmAppointment();
+
+  // Modales de compartir página
+  const [shareEmailModal, setShareEmailModal] = useState(false);
+  const [shareWAModal, setShareWAModal]       = useState(false);
+  const [shareMenuOpen, setShareMenuOpen]     = useState(false);
+
   const stats = {
-    total:     appointments.filter((a) => a.status !== "cancelled" && a.status !== "expired").length,
-    confirmed: appointments.filter((a) => a.status === "confirmed" || a.status === "reconfirmed").length,
+    total:     appointments.filter((a) => !["cancelled","expired"].includes(a.status)).length,
+    confirmed: appointments.filter((a) => ["confirmed","reconfirmed"].includes(a.status)).length,
     cancelled: appointments.filter((a) => a.status === "cancelled").length,
     pending:   appointments.filter((a) => a.status === "pending").length,
   };
+
+  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
 
   return (
     <div className="page">
@@ -29,82 +62,366 @@ export const DashboardPage = () => {
       <div className="section-hd">
         <div>
           <h1 className="page-title">📅 Agenda de hoy</h1>
-          <p className="text-sm text-gray-400 mt-1">{formatDate(date)}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{formatDate(date)}</p>
         </div>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          className="form-input w-auto text-sm" />
+        <div className="flex items-center gap-2">
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+            className="form-input text-sm hidden sm:block" style={{ width: "auto", minHeight: 40 }} />
+          {/* Compartir */}
+          <div className="relative">
+            <button onClick={() => setShareMenuOpen(!shareMenuOpen)} className="btn btn-outline btn-sm">
+              🔗 <span className="hidden sm:inline">Compartir página</span>
+            </button>
+            {shareMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShareMenuOpen(false)} />
+                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden">
+                  <p className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                    Enviar mi link de turnos
+                  </p>
+                  <button onClick={() => { setShareMenuOpen(false); setShareEmailModal(true); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                    📧 Enviar por Email
+                  </button>
+                  <button onClick={() => { setShareMenuOpen(false); setShareWAModal(true); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100">
+                    💬 Enviar por WhatsApp
+                  </button>
+                  <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+                    <p className="text-xs text-gray-400 break-all">{appUrl}/{user?.slug}</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Fecha mobile */}
+      <div className="sm:hidden mb-4">
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="form-input text-sm w-full" />
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
-          { label: "Total",      value: stats.total,     sub: "citas del día" },
-          { label: "Confirmadas",value: stats.confirmed, sub: "asistirán" },
-          { label: "Pendientes", value: stats.pending,   sub: "sin acción" },
-          { label: "Canceladas", value: stats.cancelled, sub: "no vienen" },
+          { label: "Total",       value: stats.total,     color: "text-gray-900" },
+          { label: "Confirmadas", value: stats.confirmed, color: "text-blue-600"  },
+          { label: "Pendientes",  value: stats.pending,   color: "text-amber-600" },
+          { label: "Canceladas",  value: stats.cancelled, color: "text-red-500"   },
         ].map((s) => (
           <div key={s.label} className="stat-card">
             <div className="stat-label">{s.label}</div>
-            <div className="stat-value">{s.value}</div>
-            <div className="stat-sub">{s.sub}</div>
+            <div className={`stat-value ${s.color}`}>{s.value}</div>
           </div>
         ))}
       </div>
-
-      {/* Alerta sin respuesta */}
-      {noResponse.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 mb-5 flex items-center justify-between flex-wrap gap-3">
-          <span className="text-sm text-amber-800 font-medium">
-            ⚠️ {noResponse.length} cita{noResponse.length > 1 ? "s" : ""} sin recordatorio enviado
-          </span>
-          <span className="text-xs text-amber-600">Verificá en Agenda de mañana</span>
-        </div>
-      )}
 
       {/* Lista de citas */}
       {isLoading ? <PageLoader /> : (
         <div className="card">
           {appointments.length === 0 ? (
-            <div className="py-16 text-center text-gray-400">
+            <div className="py-12 text-center text-gray-400">
               <div className="text-4xl mb-3">📭</div>
-              <p className="font-medium">No hay citas para este día</p>
+              <p className="font-medium text-sm">No hay citas para este día</p>
             </div>
           ) : (
             appointments.map((appt) => (
               <AppointmentRow key={appt.id} appt={appt}
-                onCancel={() => cancelAppt.mutate(appt.id)}
-                onComplete={() => completeAppt.mutate(appt.id)}
+                onConfirm={() => { if (window.confirm(`¿Confirmar la cita de ${appt.client?.name}?`)) confirmAppt.mutate(appt.id); }}
+                onCancel={()  => { if (window.confirm(`¿Cancelar la cita de ${appt.client?.name}? No se puede deshacer.`)) cancelAppt.mutate(appt.id); }}
+                onComplete={() => { if (window.confirm(`¿Marcar como completada la cita de ${appt.client?.name}?`)) completeAppt.mutate(appt.id); }}
               />
             ))
           )}
         </div>
       )}
+
+      {/* Modal compartir por email */}
+      {shareEmailModal && user?.slug && (
+        <ShareEmailModal
+          professionalName={user.name}
+          slug={user.slug}
+          onClose={() => setShareEmailModal(false)}
+        />
+      )}
+
+      {/* Modal compartir por WhatsApp */}
+      {shareWAModal && user?.slug && (
+        <ShareWAModal
+          professionalName={user.name}
+          slug={user.slug}
+          appUrl={appUrl}
+          onClose={() => setShareWAModal(false)}
+        />
+      )}
     </div>
   );
 };
 
-const AppointmentRow = ({ appt, onCancel, onComplete }: { appt: Appointment; onCancel: () => void; onComplete: () => void }) => (
-  <div className="flex items-center gap-4 px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/60 transition-colors">
-    <div className="font-display text-lg font-bold text-navy-DEFAULT w-14 flex-shrink-0" style={{ color: "#0f2342" }}>
-      {appt.startTime}
-    </div>
-    <div className="flex-1 min-w-0">
-      <div className="font-semibold text-sm text-gray-900">{appt.client?.name}</div>
-      <div className="text-xs text-gray-400 mt-0.5 truncate">
-        {appt.service?.name} · 📱 {appt.client?.phone}
+// ── Modal: compartir por email ────────────────────────────────────────────────
+const ShareEmailModal = ({ professionalName, slug, onClose }: { professionalName: string; slug: string; onClose: () => void }) => {
+  const [email,   setEmail]   = useState("");
+  const [error,   setError]   = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent,    setSent]    = useState(false);
+
+  const handleSend = async () => {
+    if (!isValidEmail(email)) { setError("Ingresá un email válido"); return; }
+    setError(""); setLoading(true);
+    try {
+      await professionalsApi.shareLink(email);
+      setSent(true);
+      setTimeout(onClose, 2000);
+    } catch {
+      setError("No se pudo enviar. Verificá la configuración de email en el .env");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal title="📧 Enviar link por Email" onClose={onClose}>
+      {sent ? (
+        <div className="text-center py-4">
+          <div className="text-4xl mb-2">✅</div>
+          <p className="text-sm text-emerald-600 font-medium">Email enviado a {email}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-500">Ingresá el email al que querés enviar el link de reservas de <strong>{professionalName}</strong></p>
+          <div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError(""); }}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              className="form-input"
+              placeholder="paciente@email.com"
+              autoFocus
+            />
+            {error && <p className="form-error">{error}</p>}
+          </div>
+          <button onClick={handleSend} disabled={loading || !email} className="btn btn-primary btn-full">
+            {loading ? <><Spinner size="sm" /> Enviando...</> : "Enviar Email"}
+          </button>
+        </div>
+      )}
+    </Modal>
+  );
+};
+
+// ── Modal: compartir por WhatsApp ─────────────────────────────────────────────
+const ShareWAModal = ({ professionalName, slug, appUrl, onClose }: { professionalName: string; slug: string; appUrl: string; onClose: () => void }) => {
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSend = () => {
+    if (!isValidPhone(phone)) { setError("Ingresá un número válido con código de país. Ej: +5491112345678"); return; }
+    const clean = phone.replace(/\s/g, "");
+    const text  = encodeURIComponent(
+      `Hola! 👋 Te comparto el link para reservar tu turno online con *${professionalName}*:\n\n${appUrl}/${slug}\n\nRápido y sin llamadas 🗓️`
+    );
+    window.open(`https://wa.me/${clean}?text=${text}`, "_blank");
+    onClose();
+  };
+
+  return (
+    <Modal title="💬 Enviar link por WhatsApp" onClose={onClose}>
+      <div className="space-y-3">
+        <p className="text-sm text-gray-500">Ingresá el número de WhatsApp al que querés enviar el link de <strong>{professionalName}</strong></p>
+        <div>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => { setPhone(e.target.value); setError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            className="form-input"
+            placeholder="+54 9 11 1234-5678"
+            autoFocus
+          />
+          {error && <p className="form-error">{error}</p>}
+        </div>
+        <button onClick={handleSend} disabled={!phone} className="btn btn-success btn-full">
+          💬 Abrir WhatsApp
+        </button>
       </div>
-    </div>
-    <div className="flex items-center gap-2 flex-shrink-0">
-      <StatusBadge status={appt.status} />
-      {(appt.status === "confirmed" || appt.status === "reconfirmed") && (
-        <>
-          <button onClick={onComplete} className="btn btn-xs btn-success">✓ Completar</button>
-          <button onClick={onCancel}   className="btn btn-xs btn-danger">✕</button>
-        </>
+    </Modal>
+  );
+};
+
+// ── Fila de cita ──────────────────────────────────────────────────────────────
+const AppointmentRow = ({ appt, onConfirm, onCancel, onComplete }: {
+  appt: Appointment;
+  onConfirm:  () => void;
+  onCancel:   () => void;
+  onComplete: () => void;
+}) => {
+  const [resendOpen, setResendOpen] = useState(false);
+  const [resendEmailModal, setResendEmailModal] = useState(false);
+  const [resendWAModal,    setResendWAModal]    = useState(false);
+  const isDone = ["cancelled","expired","completed","no_show"].includes(appt.status);
+  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+
+  return (
+    <>
+      <div className="px-4 py-3.5 border-b border-gray-100 last:border-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="font-display text-base font-bold flex-shrink-0" style={{ color: "#0f2342" }}>
+              {appt.startTime?.substring(0,5)}
+            </span>
+            <div className="min-w-0">
+              <div className="font-semibold text-sm text-gray-900 truncate">{appt.client?.name}</div>
+              <div className="text-xs text-gray-400 truncate">{appt.service?.name}</div>
+            </div>
+          </div>
+          <StatusBadge status={appt.status} />
+        </div>
+
+        <div className="flex items-center justify-between mt-2 gap-2">
+          <span className="text-xs text-gray-400 truncate">📱 {appt.client?.phone}</span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {["confirmed","reconfirmed"].includes(appt.status) && (
+              <>
+                <button onClick={onComplete} className="btn btn-xs btn-success">✓ Listo</button>
+                <button onClick={onCancel}   className="btn btn-xs btn-danger">✕</button>
+              </>
+            )}
+            {appt.status === "pending" && (
+              <>
+                <button onClick={onConfirm} className="btn btn-xs btn-success">✓ Aceptar</button>
+                <button onClick={onCancel}  className="btn btn-xs btn-danger">✕</button>
+              </>
+            )}
+            {/* Botón reenviar */}
+            {!isDone && (
+              <button onClick={() => setResendOpen(!resendOpen)}
+                className={`btn btn-xs btn-outline ${resendOpen ? "bg-gray-100" : ""}`}
+                title="Reenviar al paciente">
+                📤
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Sub-panel reenviar — se expande ABAJO de la fila, nunca flotante */}
+        {resendOpen && (
+          <div className="mt-2 ml-10 flex gap-2 flex-wrap">
+            <button
+              onClick={() => { setResendOpen(false); setResendEmailModal(true); }}
+              className="btn btn-xs btn-outline">
+              📧 Reenviar Email
+            </button>
+            <button
+              onClick={() => { setResendOpen(false); setResendWAModal(true); }}
+              className="btn btn-xs btn-outline">
+              💬 Reenviar WhatsApp
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Modal reenviar email */}
+      {resendEmailModal && (
+        <ResendEmailModal appt={appt} onClose={() => setResendEmailModal(false)} />
       )}
-      {appt.status === "pending" && (
-        <button onClick={onCancel} className="btn btn-xs btn-danger">✕ Rechazar</button>
+
+      {/* Modal reenviar WhatsApp */}
+      {resendWAModal && (
+        <ResendWAModal appt={appt} appUrl={appUrl} onClose={() => setResendWAModal(false)} />
       )}
-    </div>
-  </div>
-);
+    </>
+  );
+};
+
+// ── Modal: reenviar confirmación al paciente por email ────────────────────────
+const ResendEmailModal = ({ appt, onClose }: { appt: Appointment; onClose: () => void }) => {
+  const [loading, setLoading] = useState(false);
+  const [sent,    setSent]    = useState(false);
+  const [error,   setError]   = useState("");
+
+  const handleSend = async () => {
+    setLoading(true);
+    try {
+      await appointmentsApi.sendReminder(appt.id);
+      setSent(true);
+      setTimeout(onClose, 2000);
+    } catch {
+      setError("No se pudo enviar el email. Verificá la configuración SMTP.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal title="📧 Reenviar email al paciente" onClose={onClose}>
+      {sent ? (
+        <div className="text-center py-4">
+          <div className="text-4xl mb-2">✅</div>
+          <p className="text-sm text-emerald-600 font-medium">Email enviado a {appt.client?.email}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="bg-gray-50 rounded-xl p-4 space-y-1">
+            <p className="text-sm font-medium text-gray-700">{appt.client?.name}</p>
+            <p className="text-xs text-gray-400">📧 {appt.client?.email}</p>
+            <p className="text-xs text-gray-400">📅 {appt.date} a las {appt.startTime?.substring(0,5)}hs</p>
+          </div>
+          {error && <p className="form-error">{error}</p>}
+          <button onClick={handleSend} disabled={loading} className="btn btn-primary btn-full">
+            {loading ? <><Spinner size="sm" /> Enviando...</> : "Enviar Email"}
+          </button>
+        </div>
+      )}
+    </Modal>
+  );
+};
+
+// ── Modal: reenviar WhatsApp al paciente ──────────────────────────────────────
+const ResendWAModal = ({ appt, appUrl, onClose }: { appt: Appointment; appUrl: string; onClose: () => void }) => {
+  const [phone, setPhone] = useState(appt.client?.phone ?? "");
+  const [error, setError] = useState("");
+
+  const handleSend = () => {
+    if (!isValidPhone(phone)) { setError("Ingresá un número válido con código de país. Ej: +5491112345678"); return; }
+    const clean = phone.replace(/\s/g, "");
+    const text  = encodeURIComponent(
+      `Hola ${appt.client?.name}! 👋\n\n` +
+      `Te recordamos tu cita:\n` +
+      `📅 *${appt.date}* a las *${appt.startTime?.substring(0,5)}hs*\n` +
+      `🩺 ${appt.service?.name}\n\n` +
+      `Ver y gestionar tu cita: ${appUrl}/cita/${appt.token}`
+    );
+    window.open(`https://wa.me/${clean}?text=${text}`, "_blank");
+    onClose();
+  };
+
+  return (
+    <Modal title="💬 Reenviar WhatsApp al paciente" onClose={onClose}>
+      <div className="space-y-3">
+        <div className="bg-gray-50 rounded-xl p-4 space-y-1">
+          <p className="text-sm font-medium text-gray-700">{appt.client?.name}</p>
+          <p className="text-xs text-gray-400">📅 {appt.date} a las {appt.startTime?.substring(0,5)}hs</p>
+        </div>
+        <div>
+          <label className="form-label">Número de WhatsApp</label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => { setPhone(e.target.value); setError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            className="form-input"
+            placeholder="+54 9 11 1234-5678"
+            autoFocus
+          />
+          {error && <p className="form-error">{error}</p>}
+          <p className="text-xs text-gray-400 mt-1">Pre-cargado con el número del paciente. Podés editarlo.</p>
+        </div>
+        <button onClick={handleSend} disabled={!phone} className="btn btn-success btn-full">
+          💬 Abrir WhatsApp
+        </button>
+      </div>
+    </Modal>
+  );
+};
