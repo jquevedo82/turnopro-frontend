@@ -8,7 +8,7 @@ import { professionalsApi } from "@/api/professionals.api";
 import { useForm } from "react-hook-form";
 import { PageLoader } from "@/components/ui/Spinner";
 import toast from "@/utils/toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface ProfileForm {
   name:               string;
@@ -243,6 +243,89 @@ export const ProfilePage = () => {
           )}
         </div>
       </form>
+
+      {/* ── Cambiar contraseña ─────────────────────────────────────── */}
+      <ChangePasswordSection />
+    </div>
+  );
+};
+
+// ── Sección independiente de cambio de contraseña ────────────────────────────
+const ChangePasswordSection = () => {
+  const [current,  setCurrent]  = useState("");
+  const [next,     setNext]     = useState("");
+  const [confirm,  setConfirm]  = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [show,     setShow]     = useState(false);
+
+  const handleSubmit = async () => {
+    if (!current || !next || !confirm) {
+      return alert("Completá todos los campos");
+    }
+    if (next.length < 6) {
+      return alert("La nueva contraseña debe tener al menos 6 caracteres");
+    }
+    if (next !== confirm) {
+      return alert("Las contraseñas no coinciden");
+    }
+    if (!window.confirm("¿Confirmar cambio de contraseña?")) return;
+
+    setLoading(true);
+    try {
+      const { api } = await import("@/config/api");
+      await api.post("/professionals/change-password", {
+        currentPassword: current,
+        newPassword:     next,
+      });
+      alert("✅ Contraseña actualizada correctamente");
+      setCurrent(""); setNext(""); setConfirm("");
+      setShow(false);
+    } catch (e: any) {
+      const msg = e.response?.data?.message;
+      alert(Array.isArray(msg) ? msg.join(", ") : (msg || "Error al cambiar la contraseña"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card p-5 mt-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold text-sm text-gray-700">🔒 Contraseña</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Cambiá tu contraseña de acceso al panel</p>
+        </div>
+        <button onClick={() => setShow(!show)} className="btn btn-outline btn-sm">
+          {show ? "Cancelar" : "Cambiar contraseña"}
+        </button>
+      </div>
+
+      {show && (
+        <div className="mt-4 space-y-3 border-t border-gray-100 pt-4">
+          <div>
+            <label className="form-label">Contraseña actual</label>
+            <input type="password" value={current} onChange={e => setCurrent(e.target.value)}
+              className="form-input" placeholder="Tu contraseña actual" autoComplete="current-password" />
+          </div>
+          <div>
+            <label className="form-label">Nueva contraseña</label>
+            <input type="password" value={next} onChange={e => setNext(e.target.value)}
+              className="form-input" placeholder="Mínimo 6 caracteres" autoComplete="new-password" />
+          </div>
+          <div>
+            <label className="form-label">Confirmar nueva contraseña</label>
+            <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
+              className="form-input" placeholder="Repetí la nueva contraseña" autoComplete="new-password" />
+          </div>
+          {next && confirm && next !== confirm && (
+            <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
+          )}
+          <button onClick={handleSubmit} disabled={loading}
+            className="btn btn-primary btn-sm">
+            {loading ? "Guardando..." : "✅ Actualizar contraseña"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
