@@ -5,6 +5,7 @@
  * - Fix dropdown: usa portal fixed para no quedar cortado por overflow-hidden
  */
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToday, useCancelAppointment, useCompleteAppointment, useConfirmAppointment } from "@/hooks/useAppointments";
 import { StatusBadge } from "@/components/ui/Badge";
 import { PageLoader, Spinner } from "@/components/ui/Spinner";
@@ -46,6 +47,7 @@ export const DashboardPage = () => {
   const [shareEmailModal, setShareEmailModal] = useState(false);
   const [shareWAModal, setShareWAModal]       = useState(false);
   const [shareMenuOpen, setShareMenuOpen]     = useState(false);
+  const navigate = useNavigate();
 
   const stats = {
     total:     appointments.filter((a) => !["cancelled","expired"].includes(a.status)).length,
@@ -67,6 +69,11 @@ export const DashboardPage = () => {
         <div className="flex items-center gap-2">
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
             className="form-input text-sm hidden sm:block" style={{ width: "auto", minHeight: 40 }} />
+          {/* Nueva cita */}
+          <button onClick={() => navigate("/panel/nueva-cita")}
+            className="btn btn-primary btn-sm">
+            + Nueva cita
+          </button>
           {/* Compartir */}
           <div className="relative">
             <button onClick={() => setShareMenuOpen(!shareMenuOpen)} className="btn btn-outline btn-sm">
@@ -140,7 +147,7 @@ export const DashboardPage = () => {
       {/* Modal compartir por email */}
       {shareEmailModal && user?.slug && (
         <ShareEmailModal
-          professionalName={user.name}
+          professionalName={user.name ?? ""}
           slug={user.slug}
           onClose={() => setShareEmailModal(false)}
         />
@@ -149,7 +156,7 @@ export const DashboardPage = () => {
       {/* Modal compartir por WhatsApp */}
       {shareWAModal && user?.slug && (
         <ShareWAModal
-          professionalName={user.name}
+          professionalName={user.name ?? ""}
           slug={user.slug}
           appUrl={appUrl}
           onClose={() => setShareWAModal(false)}

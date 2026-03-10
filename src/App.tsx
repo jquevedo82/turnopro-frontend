@@ -26,7 +26,8 @@ import { PublicPage }      from "@/pages/public/PublicPage";
 import { ClientAppointmentPage } from "@/pages/client/ClientAppointmentPage";
 
 // Panel profesional
-import { DashboardPage }   from "@/pages/professional/dashboard/DashboardPage";
+import { DashboardPage }        from "@/pages/professional/dashboard/DashboardPage";
+import { NewAppointmentPage }   from "@/pages/professional/NewAppointmentPage";
 import { TomorrowPage }    from "@/pages/professional/dashboard/TomorrowPage";
 import { ServicesPage }    from "@/pages/professional/services/ServicesPage";
 import { SchedulePage }    from "@/pages/professional/schedule/SchedulePage";
@@ -38,7 +39,7 @@ import { ProfessionalsPage }   from "@/pages/superadmin/ProfessionalsPage";
 import { PlansPage }           from "@/pages/superadmin/PlansPage";
 
 // Clients (placeholder — mostrar lista básica)
-import { ClientsPage }     from "@/pages/professional/ClientsPage";
+import { ClientsPage }        from "@/pages/professional/ClientsPage";
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="servicios" element={<ServicesPage />} />
         <Route path="horarios"  element={<SchedulePage />} />
         <Route path="clientes"  element={<ClientsPage />} />
+        <Route path="nueva-cita"  element={<NewAppointmentPage />} />
         <Route path="perfil"    element={<ProfilePage />} />
       </Route>
 
