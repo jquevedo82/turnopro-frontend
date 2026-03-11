@@ -179,7 +179,7 @@ export const NewAppointmentPage = () => {
         )}
 
         <button type="submit" disabled={loading || !selectedSlot}
-          className="btn btn-primary btn-full">
+          className="btn btn-primary btn-full disabled:opacity-50 disabled:cursor-not-allowed">
           {loading ? "Creando cita..." : "✅ Confirmar cita"}
         </button>
 

@@ -135,6 +135,7 @@ export const DashboardPage = () => {
           ) : (
             appointments.map((appt) => (
               <AppointmentRow key={appt.id} appt={appt}
+                isPending={confirmAppt.isPending || cancelAppt.isPending || completeAppt.isPending}
                 onConfirm={() => { if (window.confirm(`¿Confirmar la cita de ${appt.client?.name}?`)) confirmAppt.mutate(appt.id); }}
                 onCancel={()  => { if (window.confirm(`¿Cancelar la cita de ${appt.client?.name}? No se puede deshacer.`)) cancelAppt.mutate(appt.id); }}
                 onComplete={() => { if (window.confirm(`¿Marcar como completada la cita de ${appt.client?.name}?`)) completeAppt.mutate(appt.id); }}
@@ -258,8 +259,9 @@ const ShareWAModal = ({ professionalName, slug, appUrl, onClose }: { professiona
 };
 
 // ── Fila de cita ──────────────────────────────────────────────────────────────
-const AppointmentRow = ({ appt, onConfirm, onCancel, onComplete }: {
-  appt: Appointment;
+const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
+  appt:       Appointment;
+  isPending:  boolean;
   onConfirm:  () => void;
   onCancel:   () => void;
   onComplete: () => void;
@@ -291,14 +293,14 @@ const AppointmentRow = ({ appt, onConfirm, onCancel, onComplete }: {
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {["confirmed","reconfirmed"].includes(appt.status) && (
               <>
-                <button onClick={onComplete} className="btn btn-xs btn-success">✓ Listo</button>
-                <button onClick={onCancel}   className="btn btn-xs btn-danger">✕</button>
+                <button onClick={onComplete} disabled={isPending} className="btn btn-xs btn-success disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? "..." : "✓ Listo"}</button>
+                <button onClick={onCancel}   disabled={isPending} className="btn btn-xs btn-danger  disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? "..." : "✕"}</button>
               </>
             )}
             {appt.status === "pending" && (
               <>
-                <button onClick={onConfirm} className="btn btn-xs btn-success">✓ Aceptar</button>
-                <button onClick={onCancel}  className="btn btn-xs btn-danger">✕</button>
+                <button onClick={onConfirm} disabled={isPending} className="btn btn-xs btn-success disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? "..." : "✓ Aceptar"}</button>
+                <button onClick={onCancel}  disabled={isPending} className="btn btn-xs btn-danger  disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? "..." : "✕"}</button>
               </>
             )}
             {/* Botón reenviar */}

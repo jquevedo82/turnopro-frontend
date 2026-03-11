@@ -225,7 +225,7 @@ export const ProfilePage = () => {
           <button
             type="submit"
             disabled={update.isPending || !isDirty}
-            className="btn btn-primary"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {update.isPending ? "Guardando..." : "Guardar cambios"}
           </button>
@@ -321,7 +321,7 @@ const ChangePasswordSection = () => {
             <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
           )}
           <button onClick={handleSubmit} disabled={loading}
-            className="btn btn-primary btn-sm">
+            className="btn btn-primary btn-sm disabled:opacity-50 disabled:cursor-not-allowed">
             {loading ? "Guardando..." : "✅ Actualizar contraseña"}
           </button>
         </div>

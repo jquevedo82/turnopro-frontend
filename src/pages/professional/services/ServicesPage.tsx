@@ -66,7 +66,7 @@ export const ServicesPage = () => {
                 <input type="number" {...register("bufferMinutes")} className="form-input" placeholder="Usa el del perfil" />
               </div>
               <div className="sm:col-span-2 flex gap-3">
-                <button type="submit" disabled={createSvc.isPending || updateSvc.isPending} className="btn btn-primary">
+                <button type="submit" disabled={createSvc.isPending || updateSvc.isPending} className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
                   {editing ? "Guardar cambios" : "Crear servicio"}
                 </button>
                 <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className="btn btn-outline">Cancelar</button>
@@ -98,4 +98,3 @@ export const ServicesPage = () => {
     </div>
   );
 };
-

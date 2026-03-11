@@ -117,8 +117,8 @@ const AppointmentRow = ({ appt, onWA }: { appt: Appointment; onWA: () => void })
         <div className="flex gap-2 mt-2 ml-11">
     <>
               <button onClick={handleEmail} disabled={loadingEmail}
-                className="btn btn-xs btn-outline">
-                {loadingEmail ? <Spinner size="sm" /> : "📧 Email"}
+                className="btn btn-xs btn-outline disabled:opacity-50 disabled:cursor-not-allowed">
+                {loadingEmail ? <><Spinner size="sm" /> Enviando...</> : "📧 Email"}
               </button>
               <button onClick={onWA} className="btn btn-xs btn-wa">
                 💬 WhatsApp

@@ -106,12 +106,12 @@ export const ClientAppointmentPage = ({ autoCancel = false }: { autoCancel?: boo
           <div className="space-y-2.5">
             {appt.status !== "reconfirmed" && (
               <button onClick={() => action("reconfirm")} disabled={loading}
-                className="btn btn-success btn-full">
+                className="btn btn-success btn-full disabled:opacity-50 disabled:cursor-not-allowed">
                 {loading ? "Procesando..." : "✅ Confirmar mi asistencia"}
               </button>
             )}
             <button onClick={() => action("cancel")} disabled={loading}
-              className="btn btn-outline btn-full text-red-500 border-red-200 hover:bg-red-50">
+              className="btn btn-outline btn-full text-red-500 border-red-200 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">
               ❌ Cancelar la cita
             </button>
           </div>
