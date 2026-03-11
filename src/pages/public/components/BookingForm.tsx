@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatDate } from "@/utils/dates";
 import type { Service } from "@/types";
@@ -7,7 +8,7 @@ interface FormData { name: string; email: string; phone: string; notes?: string 
 interface Props { service: Service; date: string; slot: string; onSubmit: (d: FormData) => void; loading: boolean; error?: string }
 
 export const BookingForm = ({ service, date, slot, onSubmit, loading, error }: Props) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>();
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
       <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-5 text-sm text-blue-800">
@@ -26,7 +27,11 @@ export const BookingForm = ({ service, date, slot, onSubmit, loading, error }: P
         </div>
         <div>
           <label className="form-label">Teléfono / WhatsApp *</label>
-          <input {...register("phone", { required: "Requerido" })} className="form-input" placeholder="+54 11 1234-5678" />
+          <PhoneInput
+            value={watch("phone") ?? ""}
+            onChange={(v) => setValue("phone", v, { shouldValidate: true })}
+            required
+          />
           {errors.phone && <p className="form-error">{errors.phone.message}</p>}
         </div>
         <div>

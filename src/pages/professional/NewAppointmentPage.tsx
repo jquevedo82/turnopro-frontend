@@ -12,6 +12,7 @@ import { appointmentsApi } from "@/api/appointments.api";
 import { useAuthStore } from "@/store/auth.store";
 import { today } from "@/utils/dates";
 import toast from "@/utils/toast";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 
 interface FormData {
   clientName:  string;
@@ -92,8 +93,11 @@ export const NewAppointmentPage = () => {
 
           <div>
             <label className="form-label">Teléfono *</label>
-            <input {...register("clientPhone", { required: "Requerido" })}
-              className="form-input" placeholder="+54 9 11 1234-5678" type="tel" />
+            <PhoneInput
+              value={watch("clientPhone") ?? ""}
+              onChange={(v) => setValue("clientPhone", v, { shouldDirty: true })}
+              required
+            />
             {errors.clientPhone && <p className="form-error">{errors.clientPhone.message}</p>}
           </div>
 

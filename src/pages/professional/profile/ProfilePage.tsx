@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { PageLoader } from "@/components/ui/Spinner";
 import toast from "@/utils/toast";
 import { useEffect, useState } from "react";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 
 interface ProfileForm {
   name:               string;
@@ -51,7 +52,7 @@ export const ProfilePage = () => {
   });
 
   const {
-    register, handleSubmit, reset,
+    register, handleSubmit, reset, watch, setValue,
     formState: { errors, isDirty },
   } = useForm<ProfileForm>();
 
@@ -144,11 +145,17 @@ export const ProfilePage = () => {
             </div>
             <div>
               <label className="form-label">Teléfono público</label>
-              <input {...register("phone")} className="form-input" placeholder="+54 11 1234-5678" />
+              <PhoneInput
+                value={watch("phone") ?? ""}
+                onChange={(v) => setValue("phone", v, { shouldDirty: true })}
+              />
             </div>
             <div>
               <label className="form-label">WhatsApp (notificaciones)</label>
-              <input {...register("whatsappPhone")} className="form-input" placeholder="+54 11 1234-5678" />
+              <PhoneInput
+                value={watch("whatsappPhone") ?? ""}
+                onChange={(v) => setValue("whatsappPhone", v, { shouldDirty: true })}
+              />
               <p className="text-xs text-gray-400 mt-1">📲 A este número te llegan los avisos de nuevas citas</p>
             </div>
             <div>
