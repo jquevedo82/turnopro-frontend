@@ -12,7 +12,7 @@ import { formatDateShort } from "@/utils/dates";
 import { useForm } from "react-hook-form";
 import toast from "@/utils/toast";
 
-interface ProfForm { name: string; email: string; password: string; profession: string; slug: string; phone?: string; planId?: number }
+interface ProfForm { name: string; email: string; profession: string; slug: string; phone?: string; planId?: number }
 
 export const ProfessionalsPage = () => {
   const { data: professionals = [], isLoading } = useProfessionals();
@@ -64,10 +64,6 @@ export const ProfessionalsPage = () => {
               <div>
                 <label className="form-label">Email *</label>
                 <input type="email" {...register("email", { required: true })} className="form-input" />
-              </div>
-              <div>
-                <label className="form-label">Contraseña inicial *</label>
-                <input type="password" {...register("password", { required: true, minLength: 8 })} className="form-input" />
               </div>
               <div>
                 <label className="form-label">Profesión *</label>
