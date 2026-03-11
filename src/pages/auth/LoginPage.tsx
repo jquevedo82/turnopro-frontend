@@ -6,6 +6,7 @@
  * evitando cualquier condición de carrera con el estado de React/Zustand.
  */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuthStore } from "@/store/auth.store";
 import { authApi } from "@/api/auth.api";
 import { Spinner } from "@/components/ui/Spinner";
@@ -88,6 +89,13 @@ export const LoginPage = () => {
               {loading ? <><Spinner size="sm" /> Verificando...</> : "Ingresar →"}
             </button>
           </form>
+
+          <div className="text-center mt-5">
+            <Link to="/forgot-password"
+              className="text-blue-300 hover:text-blue-200 text-sm transition-colors">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
         </div>
       </div>
     </div>

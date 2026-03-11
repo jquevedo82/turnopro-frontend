@@ -12,8 +12,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // Auth
-import { LoginPage }       from "@/pages/auth/LoginPage";
+import { LoginPage }            from "@/pages/auth/LoginPage";
 import { ProtectedRoute }  from "@/pages/auth/ProtectedRoute";
+import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
 
 // Layouts
 import { ProfessionalLayout } from "@/components/layout/ProfessionalLayout";
@@ -45,7 +47,9 @@ export default function App() {
   return (
     <Routes>
       {/* ── Sin autenticación ──────────────────────────────────────────── */}
-      <Route path="/login"      element={<LoginPage />} />
+      <Route path="/login"           element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password"  element={<ResetPasswordPage />} />
       <Route path="/cita/:token" element={<ClientAppointmentPage />} />
       <Route path="/cita/:token/cancelar" element={<ClientAppointmentPage autoCancel />} />
       {/* Página pública del profesional */}
