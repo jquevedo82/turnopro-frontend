@@ -32,8 +32,21 @@ export const PublicPage = () => {
   const [calYear, setCalYear]   = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
 
-  const { data: availableDays = [] } = useAvailableDays(professional?.id ?? 0, calYear, calMonth);
-  const { data: slots = [], isFetching: loadingSlots } = useSlots(professional?.id ?? 0, date, service?.id);
+  // ── Cambio: se pasa service?.id para que los días disponibles
+  //    se recalculen según la duración del servicio elegido
+  const { data: availableDays = [] } = useAvailableDays(
+    professional?.id ?? 0,
+    calYear,
+    calMonth,
+    service?.id,        // ← nuevo parámetro
+  );
+
+  const { data: slots = [], isFetching: loadingSlots } = useSlots(
+    professional?.id ?? 0,
+    date,
+    service?.id,
+  );
+
   const createAppt = useCreateAppointment();
 
   const handleBook = async (form: { name: string; email: string; phone: string; notes?: string }) => {
