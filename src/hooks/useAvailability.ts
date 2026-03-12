@@ -9,9 +9,14 @@ export const useSlots = (professionalId: number, date: string, serviceId?: numbe
     staleTime: 30_000, // 30 segundos — los slots cambian frecuentemente
   });
 
-export const useAvailableDays = (professionalId: number, year: number, month: number) =>
+export const useAvailableDays = (
+  professionalId: number,
+  year: number,
+  month: number,
+  serviceId?: number,   // ← agregado
+) =>
   useQuery({
-    queryKey: ["available-days", professionalId, year, month],
-    queryFn:  () => availabilityApi.getAvailableDays(professionalId, year, month),
+    queryKey: ["available-days", professionalId, year, month, serviceId], // ← serviceId en la key para refetch al cambiar servicio
+    queryFn:  () => availabilityApi.getAvailableDays(professionalId, year, month, serviceId),
     enabled:  !!professionalId,
   });

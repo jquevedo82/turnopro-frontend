@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMyServices } from "@/hooks/useServices";
 import { useSlots } from "@/hooks/useAvailability";
-import { appointmentsApi } from "@/api/appointments.api";
+import { useCreateAppointment } from "@/hooks/useAppointments";
 import { useAuthStore } from "@/store/auth.store";
 import { today } from "@/utils/dates";
 import toast from "@/utils/toast";
@@ -34,6 +34,7 @@ export const NewAppointmentPage = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const createAppointment = useCreateAppointment();
   const selectedServiceId = Number(watch("serviceId"));
   const selectedDate      = watch("date");
   const selectedSlot      = watch("startTime");
@@ -49,7 +50,7 @@ export const NewAppointmentPage = () => {
     if (!data.startTime) { toast.error("Seleccioná un horario"); return; }
     setLoading(true);
     try {
-      await appointmentsApi.create({
+      await createAppointment.mutateAsync({
         professionalId,
         serviceId:   Number(data.serviceId),
         clientName:  data.clientName,

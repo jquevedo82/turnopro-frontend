@@ -282,7 +282,15 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
             </span>
             <div className="min-w-0">
               <div className="font-semibold text-sm text-gray-900 truncate">{appt.client?.name}</div>
-              <div className="text-xs text-gray-400 truncate">{appt.service?.name}</div>
+              {/* Servicio + duración ── agregado */}
+              {appt.service?.name && (
+                <div className="text-xs text-gray-400 truncate">
+                  🩺 {appt.service.name}
+                  {appt.service.durationMinutes && (
+                    <span className="text-gray-300"> · {appt.service.durationMinutes} min</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <StatusBadge status={appt.status} />
@@ -314,7 +322,7 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
           </div>
         </div>
 
-        {/* Sub-panel reenviar — se expande ABAJO de la fila, nunca flotante */}
+        {/* Sub-panel reenviar */}
         {resendOpen && (
           <div className="mt-2 ml-10 flex gap-2 flex-wrap">
             <button
@@ -331,12 +339,9 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
         )}
       </div>
 
-      {/* Modal reenviar email */}
       {resendEmailModal && (
         <ResendEmailModal appt={appt} onClose={() => setResendEmailModal(false)} />
       )}
-
-      {/* Modal reenviar WhatsApp */}
       {resendWAModal && (
         <ResendWAModal appt={appt} appUrl={appUrl} onClose={() => setResendWAModal(false)} />
       )}
