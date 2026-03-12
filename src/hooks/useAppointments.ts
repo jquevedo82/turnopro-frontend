@@ -47,8 +47,17 @@ export const useMarkReminder = () => {
   });
 };
 
-export const useCreateAppointment = () =>
-  useMutation({ mutationFn: appointmentsApi.create });
+export const useCreateAppointment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: appointmentsApi.create,
+    onSuccess: () => {
+      // Invalida agenda del día, mañana y slots para que refresquen sin F5
+      qc.invalidateQueries({ queryKey: ["appointments"] });
+      qc.invalidateQueries({ queryKey: ["slots"] });
+    },
+  });
+};
 
 export const useSendReminder = () => {
   const qc = useQueryClient();
