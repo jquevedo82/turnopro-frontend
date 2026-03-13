@@ -16,8 +16,20 @@ export const BookingForm = ({ service, date, slot, onSubmit, loading, error }: P
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="form-label">Nombre completo *</label>
-          <input {...register("name", { required: "Requerido" })} className="form-input" placeholder="Ej: Juan Pérez" />
+          <label className="form-label">Nombre del paciente *</label>
+          <input
+            {...register("name", {
+              required: "Requerido",
+              pattern: {
+                value: /^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]+\s+[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]+/,
+                message: "Ingresá al menos un nombre y un apellido",
+              },
+            })}
+            className="form-input"
+            placeholder="Ej: Juan García"
+            autoCapitalize="words"
+          />
+          <p className="text-xs text-gray-400 mt-1">Ingresá el primer nombre y primer apellido del paciente</p>
           {errors.name && <p className="form-error">{errors.name.message}</p>}
         </div>
         <div>

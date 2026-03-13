@@ -86,9 +86,17 @@ export const NewAppointmentPage = () => {
           <h2 className="font-semibold text-sm text-gray-700 uppercase tracking-wide">👤 Datos del paciente</h2>
 
           <div>
-            <label className="form-label">Nombre y apellido *</label>
-            <input {...register("clientName", { required: "Requerido" })}
-              className="form-input" placeholder="Juan Pérez" autoFocus />
+            <label className="form-label">Nombre del paciente *</label>
+            <input {...register("clientName", {
+              required: "Requerido",
+              pattern: {
+                value: /^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]+\s+[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]+/,
+                message: "Ingresá al menos un nombre y un apellido",
+              },
+            })}
+              className="form-input" placeholder="Ej: Juan García"
+              autoFocus autoCapitalize="words" />
+            <p className="text-xs text-gray-400 mt-1">Primer nombre y primer apellido del paciente</p>
             {errors.clientName && <p className="form-error">{errors.clientName.message}</p>}
           </div>
 
