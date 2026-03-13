@@ -8,7 +8,7 @@ import { professionalsApi } from "@/api/professionals.api";
 import { useForm } from "react-hook-form";
 import { PageLoader } from "@/components/ui/Spinner";
 import toast from "@/utils/toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 
 interface ProfileForm {
@@ -119,6 +119,11 @@ export const ProfilePage = () => {
             <span className="card-title">Información pública</span>
           </div>
           <div className="card-body grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            {/* Avatar */}
+            <div className="sm:col-span-2">
+              <AvatarUpload currentAvatar={prof?.avatar ?? undefined} name={prof?.name} />
+            </div>
             <div>
               <label className="form-label">Nombre completo *</label>
               <input
@@ -253,6 +258,93 @@ export const ProfilePage = () => {
 
       {/* ── Cambiar contraseña ─────────────────────────────────────── */}
       <ChangePasswordSection />
+    </div>
+  );
+};
+
+// ── Componente subida de avatar ───────────────────────────────────────────────
+const AvatarUpload = ({ currentAvatar, name }: { currentAvatar?: string; name?: string }) => {
+  const [preview,  setPreview]  = useState<string | null>(currentAvatar || null);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const qc       = useQueryClient();
+
+  useEffect(() => {
+    if (currentAvatar) setPreview(currentAvatar);
+  }, [currentAvatar]);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError("Solo se permiten imágenes JPG, PNG o WebP"); return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("La imagen no puede superar 2MB"); return;
+    }
+
+    setError("");
+    setPreview(URL.createObjectURL(file));
+    setLoading(true);
+
+    try {
+      const { api } = await import("@/config/api");
+      const formData = new FormData();
+      formData.append("file", file);
+      await api.post("/professionals/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      qc.invalidateQueries({ queryKey: ["professional", "me"] });
+      toast.success("Foto de perfil actualizada ✓");
+    } catch (e: any) {
+      setError(e.response?.data?.message || "Error al subir la imagen");
+      setPreview(currentAvatar || null);
+    } finally {
+      setLoading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  const initials = name?.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+
+  return (
+    <div className="flex items-center gap-5">
+      <div className="relative flex-shrink-0">
+        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 bg-gradient-to-br from-blue-400 to-violet-500 flex items-center justify-center">
+          {preview ? (
+            <img src={preview} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white text-2xl font-bold">{initials}</span>
+          )}
+        </div>
+        {loading && (
+          <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-gray-700">Foto de perfil</p>
+        <p className="text-xs text-gray-400">JPG, PNG o WebP · Máx 2MB · Se recorta en círculo</p>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          onChange={handleFile}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={loading}
+          className="btn btn-outline btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? "Subiendo..." : preview ? "Cambiar foto" : "Subir foto"}
+        </button>
+        {error && <p className="form-error">{error}</p>}
+      </div>
     </div>
   );
 };

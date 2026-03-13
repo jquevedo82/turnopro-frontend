@@ -10,6 +10,7 @@ import { PageLoader } from "@/components/ui/Spinner";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatDateShort } from "@/utils/dates";
 import { useForm } from "react-hook-form";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import toast from "@/utils/toast";
 
 interface ProfForm { name: string; email: string; profession: string; slug: string; phone?: string; planId?: number }
@@ -25,7 +26,7 @@ export const ProfessionalsPage = () => {
   const [activatingId, setActivatingId] = useState<number | null>(null);
   const [subEnd,       setSubEnd]       = useState("");
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProfForm>();
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ProfForm>();
 
   const onSubmit = async (data: ProfForm) => {
     await createProf.mutateAsync(data);
@@ -76,7 +77,10 @@ export const ProfessionalsPage = () => {
               </div>
               <div>
                 <label className="form-label">Teléfono</label>
-                <input {...register("phone")} className="form-input" />
+                <PhoneInput
+                  value={watch("phone") ?? ""}
+                  onChange={(v) => setValue("phone", v, { shouldDirty: true })}
+                />
               </div>
               <div>
                 <label className="form-label">Plan</label>

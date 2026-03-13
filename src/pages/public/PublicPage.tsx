@@ -86,8 +86,11 @@ export const PublicPage = () => {
       <div style={{ background: "linear-gradient(135deg, #0f2342 0%, #1a3a6b 100%)" }} className="text-white px-4 py-8 sm:py-10">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-3">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-blue-400 to-violet-500 flex items-center justify-center text-xl sm:text-2xl font-bold border-2 border-white/30 flex-shrink-0">
-              {professional.name.charAt(0)}
+            <div className="w-[168px] h-[168px] sm:w-48 sm:h-48 rounded-full bg-gradient-to-br from-blue-400 to-violet-500 flex items-center justify-center text-4xl sm:text-5xl font-bold border-2 border-white/30 flex-shrink-0 overflow-hidden">
+              {professional.avatar
+                ? <img src={professional.avatar} alt={professional.name} className="w-full h-full object-cover" />
+                : professional.name.charAt(0)
+              }
             </div>
             <div className="min-w-0">
               <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight">{professional.name}</h1>
