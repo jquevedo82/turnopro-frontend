@@ -8,11 +8,17 @@ import { Navigate } from "react-router-dom";
 
 interface Props {
   children: React.ReactNode;
-  role?: "superadmin" | "professional";
+  role?: "superadmin" | "professional" | "secretary";
 }
 
+// Mapa rol → ruta de su panel
+const ROLE_HOME: Record<string, string> = {
+  superadmin:   "/admin",
+  professional: "/panel",
+  secretary:    "/secretaria",
+};
+
 export const ProtectedRoute = ({ children, role }: Props) => {
-  // Leer directamente de localStorage es más confiable en el primer render
   const token = localStorage.getItem("tp_token");
   const user  = JSON.parse(localStorage.getItem("tp_user") || "null");
 
@@ -22,7 +28,7 @@ export const ProtectedRoute = ({ children, role }: Props) => {
 
   if (role && user.role !== role) {
     // Tiene token pero el rol no coincide: redirige al panel correcto
-    const correctPath = user.role === "superadmin" ? "/admin" : "/panel";
+    const correctPath = ROLE_HOME[user.role] ?? "/login";
     return <Navigate to={correctPath} replace />;
   }
 

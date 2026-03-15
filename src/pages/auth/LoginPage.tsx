@@ -29,9 +29,13 @@ export const LoginPage = () => {
       // 1. Guardar en Zustand + localStorage
       login(accessToken, user);
 
-      // 2. Redirigir con replace para que el botón "atrás" no vuelva al login
+      // 2. Redirigir según rol con replace para que el botón "atrás" no vuelva al login
       //    Usamos window.location para forzar un render limpio que lea el localStorage
-      const destination = user.role === "superadmin" ? "/admin" : "/panel";
+      const destination =
+        user.role === "superadmin" ? "/admin"     :
+        user.role === "secretary"  ? "/secretaria" :
+        "/panel";
+
       window.location.replace(destination);
 
     } catch (err: any) {
