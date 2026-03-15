@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { organizationsApi, type OrgDetail, type OrgSummary } from "@/api/organizations.api";
 import { PageLoader, Spinner } from "@/components/ui/Spinner";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import toast from "@/utils/toast";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -46,20 +47,14 @@ export const OrganizationsPage = () => {
     },
   });
 
-  const { register, handleSubmit, reset } = useForm<{
+  const { register, handleSubmit, reset, watch, setValue } = useForm<{
     name: string; slug?: string; address?: string; phone?: string; email?: string;
   }>();
 
   if (isLoading) return <PageLoader />;
 
-  // Si hay una org seleccionada, mostrar el detalle
   if (selectedOrgId) {
-    return (
-      <OrgDetail
-        orgId={selectedOrgId}
-        onBack={() => setSelectedOrgId(null)}
-      />
-    );
+    return <OrgDetail orgId={selectedOrgId} onBack={() => setSelectedOrgId(null)} />;
   }
 
   return (
@@ -94,7 +89,10 @@ export const OrganizationsPage = () => {
               </div>
               <div>
                 <label className="form-label">Teléfono</label>
-                <input {...register("phone")} className="form-input" placeholder="+54 11 1234-5678" />
+                <PhoneInput
+                  value={watch("phone") ?? ""}
+                  onChange={(v) => setValue("phone", v, { shouldDirty: true })}
+                />
               </div>
               <div className="sm:col-span-2">
                 <label className="form-label">Dirección</label>
@@ -188,7 +186,6 @@ const OrgDetail = ({ orgId, onBack }: { orgId: number; onBack: () => void }) => 
 
   return (
     <div className="page">
-      {/* Header */}
       <div className="section-hd">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="btn btn-outline btn-sm">← Volver</button>
@@ -220,7 +217,6 @@ const OrgDetail = ({ orgId, onBack }: { orgId: number; onBack: () => void }) => 
       {/* Tab: Profesionales */}
       {tab === "profesionales" && (
         <div className="space-y-4">
-          {/* Asignados */}
           <div className="card">
             <div className="card-header">
               <span className="card-title">Profesionales asignados</span>
@@ -253,7 +249,6 @@ const OrgDetail = ({ orgId, onBack }: { orgId: number; onBack: () => void }) => 
             )}
           </div>
 
-          {/* Agregar profesional */}
           {unassigned.length > 0 && (
             <div className="card">
               <div className="card-header">
@@ -299,7 +294,9 @@ const SecretariesTab = ({
 }) => {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const { register, handleSubmit, reset } = useForm<{ name: string; email: string; phone?: string }>();
+  const { register, handleSubmit, reset, watch, setValue } = useForm<{
+    name: string; email: string; phone?: string;
+  }>();
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["organizations", orgId] });
 
@@ -332,7 +329,6 @@ const SecretariesTab = ({
 
   return (
     <div className="space-y-4">
-      {/* Botón nueva secretaria */}
       <div className="flex justify-end">
         <button onClick={() => setShowForm(!showForm)} className="btn btn-primary btn-sm">
           {showForm ? "✕ Cancelar" : "+ Nueva secretaria"}
@@ -359,7 +355,10 @@ const SecretariesTab = ({
               </div>
               <div>
                 <label className="form-label">Teléfono</label>
-                <input {...register("phone")} className="form-input" placeholder="+54 11 1234-5678" />
+                <PhoneInput
+                  value={watch("phone") ?? ""}
+                  onChange={(v) => setValue("phone", v, { shouldDirty: true })}
+                />
               </div>
               <div className="sm:col-span-2 flex gap-3">
                 <button type="submit" disabled={createSec.isPending} className="btn btn-primary">
