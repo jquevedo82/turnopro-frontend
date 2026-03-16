@@ -13,12 +13,12 @@ import { useAuthStore, useActiveProfessional } from "@/store/auth.store";
 import type { SecretaryProfessional } from "@/types";
 
 export const SecretaryLayout = () => {
-  const user                 = useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user);
   const activeProfessionalId = useAuthStore((s) => s.activeProfessionalId);
-  const setActive            = useAuthStore((s) => s.setActiveProfessional);
-  const logout               = useAuthStore((s) => s.logout);
-  const navigate             = useNavigate();
-  const activeProfessional   = useActiveProfessional();
+  const setActive = useAuthStore((s) => s.setActiveProfessional);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+  const activeProfessional = useActiveProfessional();
 
   const professionals: SecretaryProfessional[] = user?.professionals ?? [];
 
@@ -44,12 +44,19 @@ export const SecretaryLayout = () => {
                            hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
               >
                 {/* Avatar o inicial */}
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center
-                                text-blue-700 font-bold text-lg flex-shrink-0 overflow-hidden">
-                  {prof.avatar
-                    ? <img src={prof.avatar} alt={prof.name} className="w-full h-full object-cover" />
-                    : prof.name.charAt(0).toUpperCase()
-                  }
+                <div
+                  className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center
+                                text-blue-700 font-bold text-lg flex-shrink-0 overflow-hidden"
+                >
+                  {prof.avatar ? (
+                    <img
+                      src={prof.avatar}
+                      alt={prof.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    prof.name.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">{prof.name}</p>
@@ -60,7 +67,10 @@ export const SecretaryLayout = () => {
           </div>
 
           <button
-            onClick={() => { logout(); navigate("/login"); }}
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
             className="mt-8 w-full text-sm text-gray-400 hover:text-gray-600 transition-colors"
           >
             Cerrar sesión
@@ -74,10 +84,15 @@ export const SecretaryLayout = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className="w-56 bg-white border-r border-gray-100 flex flex-col">
+      <aside className="hidden md:flex w-56 min-h-screen bg-white border-r border-gray-200 flex-col flex-shrink-0">
         {/* Logo */}
         <div className="p-5 border-b border-gray-100">
-          <h1 className="text-lg font-bold text-gray-900">TurnoPro</h1>
+          <div
+            className="font-display text-xl font-bold"
+            style={{ color: "#0f2342" }}
+          >
+            Turno<span className="text-blue-600">Pro</span>
+          </div>
           <p className="text-xs text-gray-400 mt-0.5">Panel secretaria</p>
         </div>
 
@@ -109,9 +124,9 @@ export const SecretaryLayout = () => {
         {/* Navegación */}
         <nav className="flex-1 p-3 space-y-1">
           {[
-            { to: "/secretaria",            label: "Agenda",      icon: "📅", end: true },
-            { to: "/secretaria/nueva-cita", label: "Nueva cita",  icon: "➕" },
-            { to: "/secretaria/clientes",   label: "Clientes",    icon: "👥" },
+            { to: "/secretaria", label: "Agenda", icon: "📅", end: true },
+            { to: "/secretaria/nueva-cita", label: "Nueva cita", icon: "➕" },
+            { to: "/secretaria/clientes", label: "Clientes", icon: "👥" },
           ].map(({ to, label, icon, end }) => (
             <NavLink
               key={to}
@@ -136,30 +151,85 @@ export const SecretaryLayout = () => {
           <p className="text-xs text-gray-500 truncate">{user?.name}</p>
           <p className="text-xs text-gray-400 truncate">{user?.email}</p>
           <button
-            onClick={() => { logout(); navigate("/login"); }}
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
             className="mt-3 text-xs text-gray-400 hover:text-red-500 transition-colors"
           >
             Cerrar sesión
           </button>
         </div>
       </aside>
-
+      {/* ── Header mobile (< md) ──────────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div
+          className="font-display text-lg font-bold"
+          style={{ color: "#0f2342" }}
+        >
+          Turno<span className="text-blue-600">Pro</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Selector de profesional activo */}
+          <div className="p-3 border-b border-gray-100">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-2 px-1">
+              Trabajando como
+            </p>
+            <div className="relative">
+              <select
+                value={activeProfessionalId}
+                onChange={(e) => setActive(Number(e.target.value))}
+                className="w-full text-sm font-medium text-gray-800 bg-blue-50 border border-blue-200
+                         rounded-lg px-3 py-2 pr-8 appearance-none cursor-pointer focus:outline-none
+                         focus:ring-2 focus:ring-blue-300"
+              >
+                {professionals.map((prof) => (
+                  <option key={prof.id} value={prof.id}>
+                    {prof.name}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                ▼
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
+            className="text-gray-400 hover:text-red-500 p-2 rounded-lg"
+          >
+            🚪
+          </button>
+        </div>
+      </div>
       {/* Contenido principal */}
       <main className="flex-1 overflow-auto">
         {/* Banner del profesional activo */}
         <div className="bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center
-                          text-blue-700 font-bold text-sm overflow-hidden flex-shrink-0">
-            {activeProfessional?.avatar
-              ? <img src={activeProfessional.avatar} alt="" className="w-full h-full object-cover" />
-              : activeProfessional?.name.charAt(0).toUpperCase()
-            }
+          <div
+            className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center
+                          text-blue-700 font-bold text-sm overflow-hidden flex-shrink-0"
+          >
+            {activeProfessional?.avatar ? (
+              <img
+                src={activeProfessional.avatar}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              activeProfessional?.name.charAt(0).toUpperCase()
+            )}
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900 leading-none">
               {activeProfessional?.name}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">{activeProfessional?.profession}</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {activeProfessional?.profession}
+            </p>
           </div>
         </div>
 
