@@ -6,6 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { appointmentsApi } from "@/api/appointments.api";
 import toast from "../utils/toast";
 
+// ── Hooks para el panel profesional (sin cambios) ─────────────────────────────
+
 export const useToday = (date?: string) =>
   useQuery({ queryKey: ["appointments", "today", date], queryFn: () => appointmentsApi.getToday(date) });
 
@@ -52,7 +54,6 @@ export const useCreateAppointment = () => {
   return useMutation({
     mutationFn: appointmentsApi.create,
     onSuccess: () => {
-      // Invalida agenda del día, mañana y slots para que refresquen sin F5
       qc.invalidateQueries({ queryKey: ["appointments"] });
       qc.invalidateQueries({ queryKey: ["slots"] });
     },
@@ -65,5 +66,58 @@ export const useSendReminder = () => {
     mutationFn: (id: number) => appointmentsApi.sendReminder(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); toast.success("Recordatorio enviado"); },
     onError: () => toast.error("Error al enviar"),
+  });
+};
+
+// ── Hooks para el panel secretaria — reciben professionalId explícito ─────────
+// queryKey incluye professionalId para que cada profesional tenga su propia cache.
+
+export const useTodayForProfessional = (professionalId: number | null, date?: string) =>
+  useQuery({
+    queryKey: ["appointments", "today", date, professionalId],
+    queryFn:  () => appointmentsApi.getTodayForProfessional(professionalId!, date),
+    enabled:  !!professionalId,
+  });
+
+export const useTomorrowForProfessional = (professionalId: number | null) =>
+  useQuery({
+    queryKey: ["appointments", "tomorrow", professionalId],
+    queryFn:  () => appointmentsApi.getTomorrowForProfessional(professionalId!),
+    enabled:  !!professionalId,
+  });
+
+export const useConfirmForProfessional = (professionalId: number | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.confirmForProfessional(id, professionalId!),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); toast.success("Cita confirmada"); },
+  });
+};
+
+export const useCancelForProfessional = (professionalId: number | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.cancelForProfessional(id, professionalId!),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); toast.success("Cita cancelada"); },
+  });
+};
+
+export const useCompleteForProfessional = (professionalId: number | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.completeForProfessional(id, professionalId!),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); toast.success("Cita completada"); },
+  });
+};
+
+export const useCreateAppointmentForProfessional = (professionalId: number | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof appointmentsApi.createForProfessional>[0]) =>
+      appointmentsApi.createForProfessional(data, professionalId!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["appointments"] });
+      qc.invalidateQueries({ queryKey: ["slots"] });
+    },
   });
 };

@@ -19,5 +19,31 @@ export interface Appointment {
   reminderSent: boolean; reconfirmedAt: string | null; reconfirmedBy: "client"|"professional"|null
   notes: string | null; createdAt: string; client: Client; service: Service; professional: Professional
 }
-export interface AuthUser { id: number; email: string; role: "superadmin"|"professional"; name?: string; slug?: string }
-export interface LoginResponse { accessToken: string; user: AuthUser }
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+/** Profesional reducido que devuelve el login de secretaria para popular el selector */
+export interface SecretaryProfessional {
+  id:         number;
+  name:       string;
+  profession: string;
+  slug:       string;
+  avatar:     string | null;
+}
+
+export interface AuthUser {
+  id:             number;
+  email:          string;
+  role:           "superadmin" | "professional" | "secretary";
+  name?:          string;
+  // Solo para profesionales
+  slug?:          string;
+  // Solo para secretarias
+  organizationId?: number;
+  professionals?:  SecretaryProfessional[]; // lista para el selector "Trabajando como..."
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  user:        AuthUser;
+}

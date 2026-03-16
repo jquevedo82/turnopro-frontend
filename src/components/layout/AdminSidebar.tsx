@@ -6,9 +6,10 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth.store";
 
 const ADMIN_MENU = [
-  { path: "/admin",          label: "Dashboard",     icon: "📊", end: true },
-  { path: "/admin/profesionales", label: "Profesionales", icon: "👨‍⚕️" },
-  { path: "/admin/planes",   label: "Planes",        icon: "📋" },
+  { path: "/admin",                  label: "Dashboard",      icon: "📊", end: true },
+  { path: "/admin/profesionales",    label: "Profesionales",  icon: "👨‍⚕️" },
+  { path: "/admin/organizaciones",   label: "Organizaciones", icon: "🏥" },
+  { path: "/admin/planes",           label: "Planes",         icon: "📋" },
 ];
 
 export const AdminSidebar = () => {
