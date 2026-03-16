@@ -109,3 +109,15 @@ export const useCompleteForProfessional = (professionalId: number | null) => {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); toast.success("Cita completada"); },
   });
 };
+
+export const useCreateAppointmentForProfessional = (professionalId: number | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof appointmentsApi.createForProfessional>[0]) =>
+      appointmentsApi.createForProfessional(data, professionalId!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["appointments"] });
+      qc.invalidateQueries({ queryKey: ["slots"] });
+    },
+  });
+};

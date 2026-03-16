@@ -39,4 +39,12 @@ export const appointmentsApi = {
 
   sendReminderForProfessional: (id: number, professionalId: number) =>
     api.post<Appointment>(`/appointments/${id}/resend-email`, {}, { params: { professionalId } }).then((r) => r.data),
+
+  createForProfessional: (
+    data: {
+      professionalId: number; serviceId: number; date: string; startTime: string;
+      clientName: string; clientEmail: string; clientPhone: string; notes?: string;
+    },
+    professionalId: number,
+  ) => api.post<Appointment>("/appointments", data, { params: { professionalId } }).then((r) => r.data),
 };
