@@ -6,6 +6,7 @@ export const professionalsApi = {
   getAll:     () => api.get<Professional[]>("/professionals").then((r) => r.data),
   getOne:     (id: number) => api.get<Professional>(`/professionals/${id}`).then((r) => r.data),
   create:     (data: Partial<Professional>) => api.post<Professional>("/professionals", data).then((r) => r.data),
+  update:     (id: number, data: Partial<Professional>) => api.patch<Professional>(`/professionals/${id}`, data).then((r) => r.data),
   activate:   (id: number, subscriptionEnd: string) => api.post<Professional>(`/professionals/${id}/activate`, { subscriptionEnd }).then((r) => r.data),
   deactivate: (id: number) => api.post<Professional>(`/professionals/${id}/deactivate`).then((r) => r.data),
 

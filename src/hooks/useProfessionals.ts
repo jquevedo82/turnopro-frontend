@@ -25,3 +25,12 @@ export const useDeactivateProfessional = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["professionals"] }),
   });
 };
+
+export const useUpdateProfessional = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<import("@/types").Professional> }) =>
+      professionalsApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["professionals"] }),
+  });
+};

@@ -25,9 +25,18 @@ interface AuthState {
   setActiveProfessional:(id: number) => void;
 }
 
+function safeParseUser(): AuthUser | null {
+  try {
+    return JSON.parse(localStorage.getItem("tp_user") || "null");
+  } catch {
+    localStorage.removeItem("tp_user");
+    return null;
+  }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem("tp_token"),
-  user:  JSON.parse(localStorage.getItem("tp_user") || "null"),
+  user:  safeParseUser(),
 
   // Restaurar contexto activo de secretaria si venía de una sesión anterior
   activeProfessionalId: Number(sessionStorage.getItem("tp_active_prof")) || null,
