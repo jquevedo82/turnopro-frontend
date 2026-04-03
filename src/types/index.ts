@@ -6,6 +6,7 @@ export interface Professional {
   plan: Plan | null; planId: number | null; subscriptionStart: string | null; subscriptionEnd: string | null
   isActive: boolean; autoConfirm: boolean; slotDurationMinutes: number; bufferMinutes: number
   minAdvanceHours: number; maxAdvanceDays: number; cancellationHours: number; pendingExpiryHours: number; createdAt: string
+  professionalType?: 'health' | 'beauty' | 'wellness' | 'other'
 }
 export interface Service { id: number; professionalId: number; name: string; description: string; durationMinutes: number; bufferMinutes: number | null; isActive: boolean }
 export interface ProfessionalSchedule { id: number; professionalId: number; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }
@@ -32,15 +33,16 @@ export interface SecretaryProfessional {
 }
 
 export interface AuthUser {
-  id:             number;
-  email:          string;
-  role:           "superadmin" | "professional" | "secretary";
-  name?:          string;
+  id:               number;
+  email:            string;
+  role:             "superadmin" | "professional" | "secretary";
+  name?:            string;
   // Solo para profesionales
-  slug?:          string;
+  slug?:            string;
+  professionalType?: 'health' | 'beauty' | 'wellness' | 'other';
   // Solo para secretarias
-  organizationId?: number;
-  professionals?:  SecretaryProfessional[]; // lista para el selector "Trabajando como..."
+  organizationId?:  number;
+  professionals?:   SecretaryProfessional[]; // lista para el selector "Trabajando como..."
 }
 
 export interface LoginResponse {

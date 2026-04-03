@@ -13,8 +13,10 @@ import { useForm } from "react-hook-form";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import toast from "@/utils/toast";
 import type { Professional } from "@/types";
+import { PROFESSIONAL_TYPE_OPTIONS } from "@/config/verticals";
+import type { ProfessionalType } from "@/config/verticals";
 
-interface ProfForm { name: string; email: string; profession: string; slug: string; phone?: string; planId?: number }
+interface ProfForm { name: string; email: string; profession: string; slug: string; phone?: string; planId?: number; professionalType?: ProfessionalType }
 
 export const ProfessionalsPage = () => {
   const { data: professionals = [], isLoading } = useProfessionals();
@@ -108,6 +110,17 @@ export const ProfessionalsPage = () => {
                   value={watch("phone") ?? ""}
                   onChange={(v) => setValue("phone", v, { shouldDirty: true })}
                 />
+              </div>
+              <div>
+                <label className="form-label">Tipo de actividad *</label>
+                <select {...register("professionalType")} className="form-select">
+                  {PROFESSIONAL_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label} — {opt.examples}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Define cómo el sistema llama a los clientes y las citas</p>
               </div>
               <div>
                 <label className="form-label">Plan</label>

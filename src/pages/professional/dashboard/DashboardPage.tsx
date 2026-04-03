@@ -15,6 +15,7 @@ import { appointmentsApi } from "@/api/appointments.api";
 import { professionalsApi } from "@/api/professionals.api";
 import toast from "@/utils/toast";
 import type { Appointment } from "@/types";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -354,6 +355,7 @@ const ResendEmailModal = ({ appt, onClose }: { appt: Appointment; onClose: () =>
   const [loading, setLoading] = useState(false);
   const [sent,    setSent]    = useState(false);
   const [error,   setError]   = useState("");
+  const vc = useVerticalConfig();
 
   const handleSend = async () => {
     setLoading(true);
@@ -369,7 +371,7 @@ const ResendEmailModal = ({ appt, onClose }: { appt: Appointment; onClose: () =>
   };
 
   return (
-    <Modal title="📧 Reenviar email al paciente" onClose={onClose}>
+    <Modal title={`📧 Reenviar email al ${vc.clientLabel.toLowerCase()}`} onClose={onClose}>
       {sent ? (
         <div className="text-center py-4">
           <div className="text-4xl mb-2">✅</div>
@@ -396,6 +398,7 @@ const ResendEmailModal = ({ appt, onClose }: { appt: Appointment; onClose: () =>
 const ResendWAModal = ({ appt, appUrl, onClose }: { appt: Appointment; appUrl: string; onClose: () => void }) => {
   const [phone, setPhone] = useState(appt.client?.phone ?? "");
   const [error, setError] = useState("");
+  const vc = useVerticalConfig();
 
   const handleSend = () => {
     if (!isValidPhone(phone)) { setError("Ingresá un número válido con código de país. Ej: +5491112345678"); return; }
@@ -412,7 +415,7 @@ const ResendWAModal = ({ appt, appUrl, onClose }: { appt: Appointment; appUrl: s
   };
 
   return (
-    <Modal title="💬 Reenviar WhatsApp al paciente" onClose={onClose}>
+    <Modal title={`💬 Reenviar WhatsApp al ${vc.clientLabel.toLowerCase()}`} onClose={onClose}>
       <div className="space-y-3">
         <div className="bg-gray-50 rounded-xl p-4 space-y-1">
           <p className="text-sm font-medium text-gray-700">{appt.client?.name}</p>
@@ -430,7 +433,7 @@ const ResendWAModal = ({ appt, appUrl, onClose }: { appt: Appointment; appUrl: s
             autoFocus
           />
           {error && <p className="form-error">{error}</p>}
-          <p className="text-xs text-gray-400 mt-1">Pre-cargado con el número del paciente. Podés editarlo.</p>
+          <p className="text-xs text-gray-400 mt-1">Pre-cargado con el número del {vc.clientLabel.toLowerCase()}. Podés editarlo.</p>
         </div>
         <button onClick={handleSend} disabled={!phone} className="btn btn-success btn-full">
           💬 Abrir WhatsApp
