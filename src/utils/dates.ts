@@ -27,5 +27,11 @@ export const toYMD = (date: Date): string => date.toISOString().split("T")[0];
 
 export const today = (): string => toYMD(new Date());
 
+/** Devuelve la hora local actual en formato HH:mm — para pasar al backend como ?localNow */
+export const localNow = (): string => {
+  const d = new Date();
+  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+};
+
 export const DAYS_ES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 export const DAYS_SHORT = ["Do","Lu","Ma","Mi","Ju","Vi","Sá"];
