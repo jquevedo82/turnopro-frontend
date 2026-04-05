@@ -8,12 +8,13 @@ import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 
 const MENU = [
-  { path: "/panel",           label: "Hoy",       icon: "📅", end: true  },
-  { path: "/panel/manana",    label: "Mañana",     icon: "🌅", end: false },
-  { path: "/panel/servicios", label: "Servicios",  icon: "🩺", end: false },
-  { path: "/panel/horarios",  label: "Horarios",   icon: "🕐", end: false },
-  { path: "/panel/clientes",  label: "Clientes",   icon: "👥", end: false },
-  { path: "/panel/perfil",    label: "Perfil",     icon: "⚙️",  end: false },
+  { path: "/panel",           label: "Hoy",          icon: "📅", end: true  },
+  { path: "/panel/manana",    label: "Mañana",        icon: "🌅", end: false },
+  { path: "/panel/cola",      label: "Sala espera",   icon: "🪑", end: false },
+  { path: "/panel/servicios", label: "Servicios",     icon: "🩺", end: false },
+  { path: "/panel/horarios",  label: "Horarios",      icon: "🕐", end: false },
+  { path: "/panel/clientes",  label: "Clientes",      icon: "👥", end: false },
+  { path: "/panel/perfil",    label: "Perfil",        icon: "⚙️",  end: false },
 ];
 
 export const ProfessionalLayout = () => {
