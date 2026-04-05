@@ -1,5 +1,5 @@
 import { api } from "@/config/api";
-import type { Appointment } from "@/types";
+import type { Appointment, PublicQueueEntry } from "@/types";
 
 export const appointmentsApi = {
   create: (data: {
@@ -47,4 +47,30 @@ export const appointmentsApi = {
     },
     professionalId: number,
   ) => api.post<Appointment>("/appointments", data, { params: { professionalId } }).then((r) => r.data),
+
+  // ── Sala de espera ─────────────────────────────────────────────────────────
+  markArrived: (id: number) =>
+    api.post<Appointment>(`/appointments/${id}/arrived`).then((r) => r.data),
+
+  startConsultation: (id: number) =>
+    api.post<Appointment>(`/appointments/${id}/start`).then((r) => r.data),
+
+  getQueue: (date?: string) =>
+    api.get<Appointment[]>("/appointments/queue", { params: { date } }).then((r) => r.data),
+
+  markArrivedForProfessional: (id: number, professionalId: number) =>
+    api.post<Appointment>(`/appointments/${id}/arrived`, {}, { params: { professionalId } }).then((r) => r.data),
+
+  startConsultationForProfessional: (id: number, professionalId: number) =>
+    api.post<Appointment>(`/appointments/${id}/start`, {}, { params: { professionalId } }).then((r) => r.data),
+
+  getQueueForProfessional: (professionalId: number, date?: string) =>
+    api.get<Appointment[]>("/appointments/queue", { params: { date, professionalId } }).then((r) => r.data),
+
+  // ── Pantalla pública sala de espera ────────────────────────────────────────
+  getPublicQueue: (slug: string, date?: string) =>
+    api.get<PublicQueueEntry[]>(`/public/${slug}/queue`, { params: { date } }).then((r) => r.data),
+
+  getQueueVersion: (slug: string) =>
+    api.get<{ queueUpdatedAt: string | null }>(`/public/${slug}/queue-version`).then((r) => r.data),
 };

@@ -126,6 +126,7 @@ export const SecretaryLayout = () => {
           {[
             { to: "/secretaria", label: "Agenda", icon: "📅", end: true },
             { to: "/secretaria/nueva-cita", label: "Nueva cita", icon: "➕" },
+            { to: "/secretaria/cola", label: "Sala de espera", icon: "🪑" },
             { to: "/secretaria/clientes", label: "Clientes", icon: "👥" },
           ].map(({ to, label, icon, end }) => (
             <NavLink

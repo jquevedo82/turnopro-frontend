@@ -10,6 +10,7 @@ import { useAuthStore } from "@/store/auth.store";
 const MENU_ITEMS = [
   { path: "/panel",            label: "Agenda de hoy",    icon: "📅" },
   { path: "/panel/manana",     label: "Agenda de mañana", icon: "🌅" },
+  { path: "/panel/cola",       label: "Sala de espera",   icon: "🪑" },
   { path: "/panel/servicios",  label: "Servicios",        icon: "🩺" },
   { path: "/panel/horarios",   label: "Horarios",         icon: "🕐" },
   { path: "/panel/clientes",   label: "Clientes",         icon: "👥" },

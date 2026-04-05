@@ -35,7 +35,9 @@
   .badge-red   { @apply bg-red-50 text-red-700; }
   .badge-amber { @apply bg-amber-50 text-amber-700; }
   .badge-gray  { @apply bg-gray-100 text-gray-500; }
-  .badge-teal  { @apply bg-teal-50 text-teal-700; }
+  .badge-teal   { @apply bg-teal-50 text-teal-700; }
+  .badge-indigo { @apply bg-indigo-50 text-indigo-700; }
+  .badge-purple { @apply bg-purple-50 text-purple-700; }
 
   /* Formularios */
   .form-label  { @apply block text-sm font-medium text-gray-700 mb-1.5; }

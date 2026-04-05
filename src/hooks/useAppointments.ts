@@ -121,3 +121,56 @@ export const useCreateAppointmentForProfessional = (professionalId: number | nul
     },
   });
 };
+
+// ── Sala de espera — panel profesional ────────────────────────────────────────
+
+export const useQueue = (date?: string) =>
+  useQuery({
+    queryKey: ["queue", date],
+    queryFn:  () => appointmentsApi.getQueue(date),
+    staleTime: 0, // siempre revalida — la cola cambia frecuentemente
+  });
+
+export const useQueueForProfessional = (professionalId: number | null, date?: string) =>
+  useQuery({
+    queryKey: ["queue", date, professionalId],
+    queryFn:  () => appointmentsApi.getQueueForProfessional(professionalId!, date),
+    enabled:  !!professionalId,
+    staleTime: 0,
+  });
+
+export const useMarkArrived = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.markArrived(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["queue"] }); qc.invalidateQueries({ queryKey: ["appointments"] }); },
+    onError: () => toast.error("Error al registrar llegada"),
+  });
+};
+
+export const useStartConsultation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.startConsultation(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["queue"] }); qc.invalidateQueries({ queryKey: ["appointments"] }); },
+    onError: () => toast.error("Error al iniciar consulta"),
+  });
+};
+
+export const useMarkArrivedForProfessional = (professionalId: number | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.markArrivedForProfessional(id, professionalId!),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["queue"] }); qc.invalidateQueries({ queryKey: ["appointments"] }); },
+    onError: () => toast.error("Error al registrar llegada"),
+  });
+};
+
+export const useStartConsultationForProfessional = (professionalId: number | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.startConsultationForProfessional(id, professionalId!),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["queue"] }); qc.invalidateQueries({ queryKey: ["appointments"] }); },
+    onError: () => toast.error("Error al iniciar consulta"),
+  });
+};
