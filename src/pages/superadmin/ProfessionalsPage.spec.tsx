@@ -44,9 +44,10 @@ describe('ProfessionalsPage — edición de profesional', () => {
     fireEvent.click(screen.getByRole('button', { name: /editar dr. garcía/i }));
 
     expect(screen.getByDisplayValue('Dr. García')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('garcia@test.com')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('dr-garcia')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Médico')).toBeInTheDocument();
+    // El email fue removido del form de edición — se muestra en la lista pero no se edita
+    // El slug aparece como campo readOnly (no editable)
+    expect(screen.getByDisplayValue('dr-garcia')).toBeInTheDocument();
   });
 
   it('cierra el formulario de edición al hacer click en Cancelar', () => {

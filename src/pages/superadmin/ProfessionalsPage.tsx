@@ -53,14 +53,16 @@ export const ProfessionalsPage = () => {
     if (!editingProf) return;
     const form = e.currentTarget;
     const data = {
-      name:       (form.elements.namedItem("name")       as HTMLInputElement).value.trim(),
-      profession: (form.elements.namedItem("profession") as HTMLInputElement).value.trim(),
-      slug:       (form.elements.namedItem("slug")       as HTMLInputElement).value.trim(),
-      email:      (form.elements.namedItem("email")      as HTMLInputElement).value.trim(),
+      name:             (form.elements.namedItem("name")             as HTMLInputElement).value.trim(),
+      profession:       (form.elements.namedItem("profession")       as HTMLInputElement).value.trim(),
+      professionalType: (form.elements.namedItem("professionalType") as HTMLSelectElement).value as any,
     };
-    await updateProf.mutateAsync({ id: editingProf.id, data });
-    setEditingProf(null);
-    toast.success("Datos actualizados correctamente");
+    try {
+      await updateProf.mutateAsync({ id: editingProf.id, data });
+      setEditingProf(null);
+    } catch {
+      // El error ya es mostrado por onError en useUpdateProfessional
+    }
   };
 
   const handleActivate = async (id: number) => {
@@ -153,17 +155,21 @@ export const ProfessionalsPage = () => {
                 <input name="name" defaultValue={editingProf.name} required className="form-input" />
               </div>
               <div>
-                <label className="form-label">Email *</label>
-                <input name="email" type="email" defaultValue={editingProf.email} required className="form-input" />
-              </div>
-              <div>
                 <label className="form-label">Profesión *</label>
                 <input name="profession" defaultValue={editingProf.profession} required className="form-input" />
               </div>
               <div>
-                <label className="form-label">Slug (URL) *</label>
-                <input name="slug" defaultValue={editingProf.slug} required pattern="[a-z0-9\-]+" className="form-input" />
-                <p className="text-xs text-gray-400 mt-1">Solo letras minúsculas, números y guiones</p>
+                <label className="form-label">Tipo de actividad</label>
+                <select name="professionalType" defaultValue={editingProf.professionalType ?? "health"} className="form-select">
+                  {PROFESSIONAL_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Slug (URL)</label>
+                <input value={editingProf.slug} readOnly className="form-input bg-gray-50 text-gray-400 cursor-not-allowed" />
+                <p className="text-xs text-amber-600 mt-1">⚠️ No editable — los links compartidos dejarían de funcionar</p>
               </div>
               <div className="sm:col-span-2 flex gap-3">
                 <button type="submit" disabled={updateProf.isPending} className="btn btn-primary">
