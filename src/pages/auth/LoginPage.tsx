@@ -39,8 +39,12 @@ export const LoginPage = () => {
       window.location.replace(destination);
 
     } catch (err: any) {
-      const msg = err.response?.data?.message;
-      setError(Array.isArray(msg) ? msg.join(", ") : (msg || "Credenciales incorrectas"));
+      if (err.response?.status === 429) {
+        setError("Demasiados intentos fallidos. Esperá un minuto antes de intentar de nuevo.");
+      } else {
+        const msg = err.response?.data?.message;
+        setError(Array.isArray(msg) ? msg.join(", ") : (msg || "Credenciales incorrectas"));
+      }
       setLoading(false);
     }
   };

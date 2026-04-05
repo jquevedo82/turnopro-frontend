@@ -10,7 +10,10 @@ export const professionalsApi = {
   activate:   (id: number, subscriptionEnd: string) => api.post<Professional>(`/professionals/${id}/activate`, { subscriptionEnd }).then((r) => r.data),
   deactivate: (id: number) => api.post<Professional>(`/professionals/${id}/deactivate`).then((r) => r.data),
 
-  shareLink:  (email: string) => api.post('/professionals/share-link', { email }).then((r) => r.data),
+  shareLink:                (email: string) =>
+    api.post('/professionals/share-link', { email }).then((r) => r.data),
+  shareLinkForProfessional: (email: string, professionalId: number) =>
+    api.post('/professionals/share-link', { email }, { params: { professionalId } }).then((r) => r.data),
 
   // Profesional autenticado — usa /me, no necesita id
   getMe:      () => api.get<Professional>("/professionals/me").then((r) => r.data),
