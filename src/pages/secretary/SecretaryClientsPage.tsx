@@ -8,10 +8,12 @@ import { useAuthStore, useActiveProfessional } from "@/store/auth.store";
 import { clientsApi }  from "@/api/clients.api";
 import { PageLoader }  from "@/components/ui/Spinner";
 import { formatDateShort } from "@/utils/dates";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 export const SecretaryClientsPage = () => {
   const activeProfessionalId = useAuthStore((s) => s.activeProfessionalId);
   const activeProfessional   = useActiveProfessional();
+  const vc = useVerticalConfig(activeProfessional?.professionalType);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients", activeProfessionalId],
@@ -36,7 +38,7 @@ export const SecretaryClientsPage = () => {
         <div>
           <h1 className="page-title">👥 Clientes</h1>
           <p className="text-xs text-gray-400 mt-0.5">
-            Pacientes de{" "}
+            {vc.clientLabelPlural} de{" "}
             <span className="font-medium text-gray-600">{activeProfessional?.name}</span>
           </p>
         </div>

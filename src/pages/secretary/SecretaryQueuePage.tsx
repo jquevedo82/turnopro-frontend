@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { PageLoader, Spinner } from "@/components/ui/Spinner";
 import { today } from "@/utils/dates";
 import type { Appointment } from "@/types";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 const STATUS_ORDER: Record<string, number> = {
   in_progress: 0,
@@ -27,6 +28,7 @@ export const SecretaryQueuePage = () => {
   const activeProfessionalId = useAuthStore((s) => s.activeProfessionalId);
   const activeProfessionals  = useAuthStore((s) => s.user?.professionals ?? []);
   const activeProfessional   = activeProfessionals.find((p) => p.id === activeProfessionalId);
+  const vc  = useVerticalConfig(activeProfessional?.professionalType);
   const [date]               = useState(today());
 
   const { data: queue = [], isLoading } = useQueueForProfessional(activeProfessionalId, date);
@@ -69,7 +71,7 @@ export const SecretaryQueuePage = () => {
         <div>
           <h1 className="page-title">🪑 Sala de espera</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {activeProfessional?.name} · {date} · {queue.length} pacientes
+            {activeProfessional?.name} · {date} · {queue.length} {vc.clientLabelPlural.toLowerCase()}
           </p>
         </div>
         {publicUrl && (
@@ -82,14 +84,14 @@ export const SecretaryQueuePage = () => {
       {queue.length === 0 ? (
         <div className="card py-16 text-center text-gray-400">
           <div className="text-4xl mb-3">🪑</div>
-          <p>No hay pacientes confirmados para hoy</p>
+          <p>No hay {vc.clientLabelPlural.toLowerCase()} confirmados para hoy</p>
         </div>
       ) : (
         <div className="space-y-4">
           {inProgress.length > 0 && (
             <QueueSection title="En consulta ahora" colorClass="border-green-200 bg-green-50">
               {inProgress.map((appt) => (
-                <QueueRow key={appt.id} appt={appt}
+                <QueueRow key={appt.id} appt={appt} clientLabel={vc.clientLabel}
                   onComplete={() => completeAppt.mutate(appt.id)}
                   isLoading={completeAppt.isPending} />
               ))}
@@ -98,7 +100,7 @@ export const SecretaryQueuePage = () => {
           {waiting.length > 0 && (
             <QueueSection title={`Esperando (${waiting.length})`} colorClass="border-blue-200 bg-blue-50">
               {waiting.map((appt, idx) => (
-                <QueueRow key={appt.id} appt={appt} position={idx + 1}
+                <QueueRow key={appt.id} appt={appt} clientLabel={vc.clientLabel} position={idx + 1}
                   onStart={() => startConsultation.mutate(appt.id)}
                   onComplete={() => completeAppt.mutate(appt.id)}
                   isLoading={startConsultation.isPending || completeAppt.isPending} />
@@ -108,7 +110,7 @@ export const SecretaryQueuePage = () => {
           {upcoming.length > 0 && (
             <QueueSection title="Confirmados — no llegaron aún" colorClass="border-gray-200 bg-white">
               {upcoming.map((appt) => (
-                <QueueRow key={appt.id} appt={appt}
+                <QueueRow key={appt.id} appt={appt} clientLabel={vc.clientLabel}
                   onArrived={() => markArrived.mutate(appt.id)}
                   isLoading={markArrived.isPending} />
               ))}
@@ -117,7 +119,7 @@ export const SecretaryQueuePage = () => {
           {done.length > 0 && (
             <QueueSection title={`Completados (${done.length})`} colorClass="border-gray-200 bg-white" collapsed>
               {done.map((appt) => (
-                <QueueRow key={appt.id} appt={appt} />
+                <QueueRow key={appt.id} appt={appt} clientLabel={vc.clientLabel}  />
               ))}
             </QueueSection>
           )}
@@ -148,14 +150,15 @@ const QueueSection = ({
 };
 
 const QueueRow = ({
-  appt, position, onArrived, onStart, onComplete, isLoading,
+  appt, position, onArrived, onStart, onComplete, isLoading, clientLabel = "Cliente",
 }: {
-  appt:        Appointment;
-  position?:   number;
-  onArrived?:  () => void;
-  onStart?:    () => void;
-  onComplete?: () => void;
-  isLoading?:  boolean;
+  appt:         Appointment;
+  position?:    number;
+  onArrived?:   () => void;
+  onStart?:     () => void;
+  onComplete?:  () => void;
+  isLoading?:   boolean;
+  clientLabel?: string;
 }) => (
   <div className="flex items-center gap-4 px-5 py-4">
     {position != null && (
@@ -164,7 +167,7 @@ const QueueRow = ({
       </div>
     )}
     <div className="flex-1 min-w-0">
-      <div className="font-medium text-gray-900 truncate">{appt.client?.name ?? `Paciente #${appt.clientId}`}</div>
+      <div className="font-medium text-gray-900 truncate">{appt.client?.name ?? `${clientLabel} #${appt.clientId}`}</div>
       <div className="text-xs text-gray-400 mt-0.5">
         {appt.startTime} · {appt.service?.name}
         {appt.arrivedAt && (
