@@ -98,7 +98,7 @@ export const NewAppointmentPage = () => {
             })}
               className="form-input" placeholder="Ej: Juan García"
               autoFocus autoCapitalize="words" />
-            <p className="text-xs text-gray-400 mt-1">Primer nombre y primer apellido del paciente</p>
+            <p className="text-xs text-gray-400 mt-1">Primer nombre y primer apellido del {vc.clientLabel.toLowerCase()}</p>
             {errors.clientName && <p className="form-error">{errors.clientName.message}</p>}
           </div>
 
@@ -115,7 +115,7 @@ export const NewAppointmentPage = () => {
           <div>
             <label className="form-label">Email <span className="text-gray-400 font-normal">(opcional — para enviarle confirmación)</span></label>
             <input {...register("clientEmail")}
-              className="form-input" placeholder="paciente@email.com" type="email" />
+              className="form-input" placeholder={`${vc.clientLabel.toLowerCase()}@email.com`} type="email" />
           </div>
         </div>
 
@@ -188,7 +188,7 @@ export const NewAppointmentPage = () => {
               📅 Cita el <strong>{selectedDate}</strong> a las <strong>{selectedSlot}hs</strong>
             </p>
             <p className="text-xs text-blue-600 mt-0.5">
-              Se creará como confirmada y se enviará email al paciente si ingresaste uno.
+              Se creará como confirmada y se enviará email al {vc.clientLabel.toLowerCase()} si ingresaste uno.
             </p>
           </div>
         )}

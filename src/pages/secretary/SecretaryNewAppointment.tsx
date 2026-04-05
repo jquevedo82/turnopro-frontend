@@ -151,7 +151,7 @@ export const SecretaryNewAppointment = () => {
             <input
               {...register("clientEmail")}
               className="form-input"
-              placeholder="paciente@email.com"
+              placeholder={`${vc.clientLabel.toLowerCase()}@email.com`}
               type="email"
             />
           </div>
@@ -251,7 +251,7 @@ export const SecretaryNewAppointment = () => {
               📅 Cita el <strong>{selectedDate}</strong> a las <strong>{selectedSlot}hs</strong>
             </p>
             <p className="text-xs text-blue-600 mt-0.5">
-              Se creará como confirmada y se enviará email al paciente si ingresaste uno.
+              Se creará como confirmada y se enviará email al {vc.clientLabel.toLowerCase()} si ingresaste uno.
             </p>
           </div>
         )}

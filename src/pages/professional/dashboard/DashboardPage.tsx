@@ -203,7 +203,7 @@ const ShareEmailModal = ({ professionalName, slug, onClose }: { professionalName
               onChange={(e) => { setEmail(e.target.value); setError(""); }}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               className="form-input"
-              placeholder="paciente@email.com"
+              placeholder={`${vc.clientLabel.toLowerCase()}@email.com`}
               autoFocus
             />
             {error && <p className="form-error">{error}</p>}
@@ -264,6 +264,7 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
   onCancel:   () => void;
   onComplete: () => void;
 }) => {
+  const vc = useVerticalConfig();
   const [resendOpen, setResendOpen] = useState(false);
   const [resendEmailModal, setResendEmailModal] = useState(false);
   const [resendWAModal,    setResendWAModal]    = useState(false);
@@ -313,7 +314,7 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
             {!isDone && (
               <button onClick={() => setResendOpen(!resendOpen)}
                 className={`btn btn-xs btn-outline ${resendOpen ? "bg-gray-100" : ""}`}
-                title="Reenviar al paciente">
+                title={`Reenviar al ${vc.clientLabel.toLowerCase()}`}>
                 📤
               </button>
             )}
