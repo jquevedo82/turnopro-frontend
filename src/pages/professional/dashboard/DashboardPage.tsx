@@ -16,6 +16,7 @@ import { professionalsApi } from "@/api/professionals.api";
 import toast from "@/utils/toast";
 import type { Appointment } from "@/types";
 import { useVerticalConfig } from "@/hooks/useVerticalConfig";
+import { isValidEmail, isValidPhone } from "@/utils/validation";
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -30,10 +31,6 @@ const Modal = ({ title, onClose, children }: { title: string; onClose: () => voi
     </div>
   </div>
 );
-
-// ── Validación de email ───────────────────────────────────────────────────────
-const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-const isValidPhone = (v: string) => /^\+?[0-9]{8,15}$/.test(v.replace(/\s/g, ""));
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export const DashboardPage = () => {

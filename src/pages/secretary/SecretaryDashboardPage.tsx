@@ -23,8 +23,7 @@ import { appointmentsApi }          from "@/api/appointments.api";
 import { professionalsApi }         from "@/api/professionals.api";
 import toast                        from "@/utils/toast";
 import type { Appointment }         from "@/types";
-
-const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+import { isValidEmail, isValidPhone } from "@/utils/validation";
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -39,8 +38,6 @@ const Modal = ({ title, onClose, children }: { title: string; onClose: () => voi
     </div>
   </div>
 );
-
-const isValidPhone = (v: string) => /^\+?[0-9]{8,15}$/.test(v.replace(/\s/g, ""));
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export const SecretaryDashboardPage = () => {
