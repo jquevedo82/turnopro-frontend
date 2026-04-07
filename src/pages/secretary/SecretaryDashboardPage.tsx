@@ -20,8 +20,11 @@ import { StatusBadge }              from "@/components/ui/Badge";
 import { PageLoader, Spinner }      from "@/components/ui/Spinner";
 import { formatDate, today }        from "@/utils/dates";
 import { appointmentsApi }          from "@/api/appointments.api";
+import { professionalsApi }         from "@/api/professionals.api";
 import toast                        from "@/utils/toast";
 import type { Appointment }         from "@/types";
+
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -53,6 +56,11 @@ export const SecretaryDashboardPage = () => {
   const completeAppt = useCompleteForProfessional(activeProfessionalId);
   const confirmAppt  = useConfirmForProfessional(activeProfessionalId);
 
+  const [shareMenuOpen, setShareMenuOpen]   = useState(false);
+  const [shareEmailModal, setShareEmailModal] = useState(false);
+  const [shareWAModal, setShareWAModal]       = useState(false);
+  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+
   const stats = {
     total:     appointments.filter((a) => !["cancelled","expired"].includes(a.status)).length,
     confirmed: appointments.filter((a) => ["confirmed","reconfirmed"].includes(a.status)).length,
@@ -83,6 +91,34 @@ export const SecretaryDashboardPage = () => {
           <button onClick={() => navigate("/secretaria/nueva-cita")} className="btn btn-primary btn-sm">
             + Nueva cita
           </button>
+          {activeProfessional?.slug && (
+            <div className="relative">
+              <button onClick={() => setShareMenuOpen(!shareMenuOpen)} className="btn btn-outline btn-sm">
+                🔗 <span className="hidden sm:inline">Compartir</span>
+              </button>
+              {shareMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShareMenuOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden">
+                    <p className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                      Enviar link de turnos
+                    </p>
+                    <button onClick={() => { setShareMenuOpen(false); setShareEmailModal(true); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                      📧 Enviar por Email
+                    </button>
+                    <button onClick={() => { setShareMenuOpen(false); setShareWAModal(true); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100">
+                      💬 Enviar por WhatsApp
+                    </button>
+                    <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+                      <p className="text-xs text-gray-400 break-all">{appUrl}/{activeProfessional.slug}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -131,7 +167,111 @@ export const SecretaryDashboardPage = () => {
           )}
         </div>
       )}
+
+      {/* Modales compartir página del profesional */}
+      {shareEmailModal && activeProfessional && activeProfessionalId && (
+        <SharePageEmailModal
+          professionalName={activeProfessional.name}
+          professionalId={activeProfessionalId}
+          onClose={() => setShareEmailModal(false)}
+        />
+      )}
+      {shareWAModal && activeProfessional && (
+        <SharePageWAModal
+          professionalName={activeProfessional.name}
+          slug={activeProfessional.slug}
+          appUrl={appUrl}
+          onClose={() => setShareWAModal(false)}
+        />
+      )}
     </div>
+  );
+};
+
+// ── Modal: compartir página por email (secretaria) ────────────────────────────
+const SharePageEmailModal = ({
+  professionalName, professionalId, onClose,
+}: { professionalName: string; professionalId: number; onClose: () => void }) => {
+  const [email,   setEmail]   = useState("");
+  const [error,   setError]   = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent,    setSent]    = useState(false);
+
+  const handleSend = async () => {
+    if (!isValidEmail(email)) { setError("Ingresá un email válido"); return; }
+    setError(""); setLoading(true);
+    try {
+      await professionalsApi.shareLinkForProfessional(email, professionalId);
+      setSent(true);
+      setTimeout(onClose, 2000);
+    } catch {
+      setError("No se pudo enviar. Verificá la configuración de email.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal title="📧 Enviar link por Email" onClose={onClose}>
+      {sent ? (
+        <div className="text-center py-4">
+          <div className="text-4xl mb-2">✅</div>
+          <p className="text-sm text-emerald-600 font-medium">Email enviado a {email}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-500">
+            Enviá el link de reservas de <strong>{professionalName}</strong>
+          </p>
+          <div>
+            <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              className="form-input" placeholder="paciente@email.com" autoFocus />
+            {error && <p className="form-error">{error}</p>}
+          </div>
+          <button onClick={handleSend} disabled={loading || !email} className="btn btn-primary btn-full">
+            {loading ? <><Spinner size="sm" /> Enviando...</> : "Enviar Email"}
+          </button>
+        </div>
+      )}
+    </Modal>
+  );
+};
+
+// ── Modal: compartir página por WhatsApp (secretaria) ─────────────────────────
+const SharePageWAModal = ({
+  professionalName, slug, appUrl, onClose,
+}: { professionalName: string; slug: string; appUrl: string; onClose: () => void }) => {
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSend = () => {
+    if (!phone.trim()) { setError("Ingresá un número"); return; }
+    const clean = phone.replace(/\s/g, "");
+    const text  = encodeURIComponent(
+      `Hola! 👋 Te comparto el link para reservar tu turno online con *${professionalName}*:\n\n${appUrl}/${slug}\n\nRápido y sin llamadas 🗓️`
+    );
+    window.open(`https://wa.me/${clean}?text=${text}`, "_blank");
+    onClose();
+  };
+
+  return (
+    <Modal title="💬 Enviar link por WhatsApp" onClose={onClose}>
+      <div className="space-y-3">
+        <p className="text-sm text-gray-500">
+          Enviá el link de <strong>{professionalName}</strong> por WhatsApp
+        </p>
+        <div>
+          <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            className="form-input" placeholder="+54 9 11 1234-5678" autoFocus />
+          {error && <p className="form-error">{error}</p>}
+        </div>
+        <button onClick={handleSend} disabled={!phone} className="btn btn-success btn-full">
+          💬 Abrir WhatsApp
+        </button>
+      </div>
+    </Modal>
   );
 };
 

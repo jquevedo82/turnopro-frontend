@@ -13,6 +13,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { today } from "@/utils/dates";
 import toast from "@/utils/toast";
 import { PhoneInput } from "@/components/ui/PhoneInput";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 interface FormData {
   clientName:  string;
@@ -34,6 +35,7 @@ export const NewAppointmentPage = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const vc = useVerticalConfig();
   const createAppointment = useCreateAppointment();
   const selectedServiceId = Number(watch("serviceId"));
   const selectedDate      = watch("date");
@@ -73,7 +75,7 @@ export const NewAppointmentPage = () => {
     <div className="page">
       <div className="section-hd">
         <div>
-          <h1 className="page-title">📋 Nueva cita</h1>
+          <h1 className="page-title">📋 Nueva {vc.appointmentLabel.toLowerCase()}</h1>
           <p className="text-xs text-gray-400 mt-0.5">Carga manual — presencial o telefónica</p>
         </div>
         <button onClick={() => navigate(-1)} className="btn btn-outline btn-sm">← Volver</button>
@@ -83,10 +85,10 @@ export const NewAppointmentPage = () => {
 
         {/* Datos del paciente */}
         <div className="card p-5 space-y-4">
-          <h2 className="font-semibold text-sm text-gray-700 uppercase tracking-wide">👤 Datos del paciente</h2>
+          <h2 className="font-semibold text-sm text-gray-700 uppercase tracking-wide">👤 Datos del {vc.clientLabel.toLowerCase()}</h2>
 
           <div>
-            <label className="form-label">Nombre del paciente *</label>
+            <label className="form-label">Nombre del {vc.clientLabel.toLowerCase()} *</label>
             <input {...register("clientName", {
               required: "Requerido",
               pattern: {

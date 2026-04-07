@@ -1,9 +1,9 @@
 /**
  * ProfessionalsPage.tsx — CRUD de profesionales para el superadmin.
- * Alta, activación/desactivación y edición de suscripción.
+ * Alta, edición, activación/desactivación de suscripción.
  */
 import { useState } from "react";
-import { useProfessionals, useCreateProfessional, useActivateProfessional, useDeactivateProfessional } from "@/hooks/useProfessionals";
+import { useProfessionals, useCreateProfessional, useUpdateProfessional, useActivateProfessional, useDeactivateProfessional } from "@/hooks/useProfessionals";
 import { useQuery } from "@tanstack/react-query";
 import { plansApi } from "@/api/plans.api";
 import { PageLoader } from "@/components/ui/Spinner";
@@ -12,26 +12,57 @@ import { formatDateShort } from "@/utils/dates";
 import { useForm } from "react-hook-form";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import toast from "@/utils/toast";
+import type { Professional } from "@/types";
+import { PROFESSIONAL_TYPE_OPTIONS } from "@/config/verticals";
+import type { ProfessionalType } from "@/config/verticals";
 
-interface ProfForm { name: string; email: string; profession: string; slug: string; phone?: string; planId?: number }
+interface ProfForm { name: string; email: string; profession: string; slug: string; phone?: string; planId?: number; professionalType?: ProfessionalType }
 
 export const ProfessionalsPage = () => {
   const { data: professionals = [], isLoading } = useProfessionals();
   const { data: plans = [] } = useQuery({ queryKey: ["plans"], queryFn: plansApi.getAll });
   const createProf    = useCreateProfessional();
+  const updateProf    = useUpdateProfessional();
   const activateProf  = useActivateProfessional();
   const deactivate    = useDeactivateProfessional();
 
   const [showForm,     setShowForm]     = useState(false);
+  const [editingProf,  setEditingProf]  = useState<Professional | null>(null);
   const [activatingId, setActivatingId] = useState<number | null>(null);
   const [subEnd,       setSubEnd]       = useState("");
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ProfForm>();
 
+  // Formulario de alta
   const onSubmit = async (data: ProfForm) => {
     await createProf.mutateAsync(data);
     reset(); setShowForm(false);
     toast.success("Profesional creado exitosamente");
+  };
+
+  // Abrir formulario de edición con datos precargados
+  const handleEditOpen = (p: Professional) => {
+    setEditingProf(p);
+    setShowForm(false);
+  };
+
+  const handleEditClose = () => setEditingProf(null);
+
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingProf) return;
+    const form = e.currentTarget;
+    const data = {
+      name:             (form.elements.namedItem("name")             as HTMLInputElement).value.trim(),
+      profession:       (form.elements.namedItem("profession")       as HTMLInputElement).value.trim(),
+      professionalType: (form.elements.namedItem("professionalType") as HTMLSelectElement).value as any,
+    };
+    try {
+      await updateProf.mutateAsync({ id: editingProf.id, data });
+      setEditingProf(null);
+    } catch {
+      // El error ya es mostrado por onError en useUpdateProfessional
+    }
   };
 
   const handleActivate = async (id: number) => {
@@ -47,7 +78,7 @@ export const ProfessionalsPage = () => {
     <div className="page">
       <div className="section-hd">
         <h1 className="page-title">👨‍⚕️ Profesionales</h1>
-        <button onClick={() => setShowForm(!showForm)} className="btn btn-primary btn-sm">
+        <button onClick={() => { setShowForm(!showForm); setEditingProf(null); }} className="btn btn-primary btn-sm">
           {showForm ? "✕ Cancelar" : "+ Alta profesional"}
         </button>
       </div>
@@ -83,6 +114,17 @@ export const ProfessionalsPage = () => {
                 />
               </div>
               <div>
+                <label className="form-label">Tipo de actividad *</label>
+                <select {...register("professionalType")} className="form-select">
+                  {PROFESSIONAL_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label} — {opt.examples}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Define cómo el sistema llama a los clientes y las citas</p>
+              </div>
+              <div>
                 <label className="form-label">Plan</label>
                 <select {...register("planId", { valueAsNumber: true })} className="form-select">
                   <option value="">Sin plan</option>
@@ -100,7 +142,47 @@ export const ProfessionalsPage = () => {
         </div>
       )}
 
-      {/* Tabla */}
+      {/* Formulario de edición */}
+      {editingProf && (
+        <div className="card mb-6 border-blue-200">
+          <div className="card-header bg-blue-50">
+            <span className="card-title text-blue-700">Editando: {editingProf.name}</span>
+          </div>
+          <div className="card-body">
+            <form onSubmit={handleEditSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="form-label">Nombre completo *</label>
+                <input name="name" defaultValue={editingProf.name} required className="form-input" />
+              </div>
+              <div>
+                <label className="form-label">Profesión *</label>
+                <input name="profession" defaultValue={editingProf.profession} required className="form-input" />
+              </div>
+              <div>
+                <label className="form-label">Tipo de actividad</label>
+                <select name="professionalType" defaultValue={editingProf.professionalType ?? "health"} className="form-select">
+                  {PROFESSIONAL_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Slug (URL)</label>
+                <input value={editingProf.slug} readOnly className="form-input bg-gray-50 text-gray-400 cursor-not-allowed" />
+                <p className="text-xs text-amber-600 mt-1">⚠️ No editable — los links compartidos dejarían de funcionar</p>
+              </div>
+              <div className="sm:col-span-2 flex gap-3">
+                <button type="submit" disabled={updateProf.isPending} className="btn btn-primary">
+                  {updateProf.isPending ? "Guardando..." : "Guardar cambios"}
+                </button>
+                <button type="button" onClick={handleEditClose} className="btn btn-outline">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lista */}
       <div className="card">
         {professionals.map((p) => (
           <div key={p.id} className="px-5 py-4 border-b border-gray-100 last:border-0">
@@ -119,7 +201,16 @@ export const ProfessionalsPage = () => {
                 <StatusBadge status={p.isActive ? "active" : "inactive"} />
                 {p.subscriptionEnd && <span className="text-xs text-gray-400">hasta {formatDateShort(p.subscriptionEnd)}</span>}
 
-                {/* Activar */}
+                {/* Editar */}
+                <button
+                  onClick={() => handleEditOpen(p)}
+                  className="btn btn-outline btn-xs"
+                  aria-label={`Editar ${p.name}`}
+                >
+                  Editar
+                </button>
+
+                {/* Activar / Desactivar */}
                 {activatingId === p.id ? (
                   <div className="flex items-center gap-2">
                     <input type="date" value={subEnd} onChange={(e) => setSubEnd(e.target.value)}

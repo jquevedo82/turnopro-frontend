@@ -126,6 +126,7 @@ export const SecretaryLayout = () => {
           {[
             { to: "/secretaria", label: "Agenda", icon: "📅", end: true },
             { to: "/secretaria/nueva-cita", label: "Nueva cita", icon: "➕" },
+            { to: "/secretaria/cola", label: "Sala de espera", icon: "🪑" },
             { to: "/secretaria/clientes", label: "Clientes", icon: "👥" },
           ].map(({ to, label, icon, end }) => (
             <NavLink
@@ -145,6 +146,20 @@ export const SecretaryLayout = () => {
             </NavLink>
           ))}
         </nav>
+
+        {/* Link a la página pública del profesional activo */}
+        {activeProfessional?.slug && (
+          <div className="p-3 border-t border-gray-100">
+            <a
+              href={`/${activeProfessional.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 transition-colors px-1"
+            >
+              🌐 Ver página de {activeProfessional.name}
+            </a>
+          </div>
+        )}
 
         {/* Footer — info de la secretaria */}
         <div className="p-4 border-t border-gray-100">

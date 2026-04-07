@@ -2,23 +2,25 @@ import { useQuery } from "@tanstack/react-query";
 import { clientsApi } from "@/api/clients.api";
 import { PageLoader } from "@/components/ui/Spinner";
 import { formatDateShort } from "@/utils/dates";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 export const ClientsPage = () => {
   const { data: clients = [], isLoading } = useQuery({ queryKey: ["clients"], queryFn: clientsApi.getMy });
+  const vc = useVerticalConfig();
 
   if (isLoading) return <PageLoader />;
 
   return (
     <div className="page">
       <div className="section-hd">
-        <h1 className="page-title">👥 Clientes</h1>
+        <h1 className="page-title">👥 {vc.clientLabelPlural}</h1>
         <span className="text-sm text-gray-400">{clients.length} registrados</span>
       </div>
       <div className="card">
         {clients.length === 0 ? (
           <div className="py-16 text-center text-gray-400">
             <div className="text-4xl mb-3">👥</div>
-            <p>Tus clientes aparecerán aquí después de su primera reserva</p>
+            <p>Tus {vc.clientLabelPlural.toLowerCase()} aparecerán aquí después de su primera reserva</p>
           </div>
         ) : (
           clients.map((c) => (

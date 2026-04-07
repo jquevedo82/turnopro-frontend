@@ -6,18 +6,31 @@ export interface Professional {
   plan: Plan | null; planId: number | null; subscriptionStart: string | null; subscriptionEnd: string | null
   isActive: boolean; autoConfirm: boolean; slotDurationMinutes: number; bufferMinutes: number
   minAdvanceHours: number; maxAdvanceDays: number; cancellationHours: number; pendingExpiryHours: number; createdAt: string
+  professionalType?: 'health' | 'beauty' | 'wellness' | 'other'
 }
 export interface Service { id: number; professionalId: number; name: string; description: string; durationMinutes: number; bufferMinutes: number | null; isActive: boolean }
 export interface ProfessionalSchedule { id: number; professionalId: number; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }
 export interface ScheduleException { id: number; professionalId: number; date: string; isClosed: boolean; customStartTime: string | null; customEndTime: string | null; reason: string }
 export interface Client { id: number; professionalId: number; name: string; email: string; phone: string; createdAt: string }
-export type AppointmentStatus = "pending"|"confirmed"|"reconfirmed"|"cancelled"|"rejected"|"expired"|"completed"|"no_show"
+export type AppointmentStatus =
+  | "pending" | "confirmed" | "reconfirmed"
+  | "arrived" | "in_progress"
+  | "cancelled" | "rejected" | "expired" | "completed" | "no_show"
+
 export interface Appointment {
   id: number; professionalId: number; clientId: number; serviceId: number
   date: string; startTime: string; endTime: string; status: AppointmentStatus
   cancelledBy: "client"|"professional"|null; token: string; tokenUsedAt: string | null
   reminderSent: boolean; reconfirmedAt: string | null; reconfirmedBy: "client"|"professional"|null
+  arrivedAt: string | null
   notes: string | null; createdAt: string; client: Client; service: Service; professional: Professional
+}
+
+/** Entrada de la cola pública — devuelta por GET /public/:slug/queue */
+export interface PublicQueueEntry {
+  position: number;
+  name:     string;   // Nombre anonimizado: "Juan G."
+  status:   "arrived" | "in_progress";
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -32,15 +45,16 @@ export interface SecretaryProfessional {
 }
 
 export interface AuthUser {
-  id:             number;
-  email:          string;
-  role:           "superadmin" | "professional" | "secretary";
-  name?:          string;
+  id:               number;
+  email:            string;
+  role:             "superadmin" | "professional" | "secretary";
+  name?:            string;
   // Solo para profesionales
-  slug?:          string;
+  slug?:            string;
+  professionalType?: 'health' | 'beauty' | 'wellness' | 'other';
   // Solo para secretarias
-  organizationId?: number;
-  professionals?:  SecretaryProfessional[]; // lista para el selector "Trabajando como..."
+  organizationId?:  number;
+  professionals?:   SecretaryProfessional[]; // lista para el selector "Trabajando como..."
 }
 
 export interface LoginResponse {
