@@ -7,8 +7,9 @@ export const professionalsApi = {
   getOne:     (id: number) => api.get<Professional>(`/professionals/${id}`).then((r) => r.data),
   create:     (data: Partial<Professional>) => api.post<Professional>("/professionals", data).then((r) => r.data),
   update:     (id: number, data: Partial<Professional>) => api.patch<Professional>(`/professionals/${id}`, data).then((r) => r.data),
-  activate:   (id: number, subscriptionEnd: string) => api.post<Professional>(`/professionals/${id}/activate`, { subscriptionEnd }).then((r) => r.data),
-  deactivate: (id: number) => api.post<Professional>(`/professionals/${id}/deactivate`).then((r) => r.data),
+  activate:      (id: number, subscriptionEnd: string) => api.post<Professional>(`/professionals/${id}/activate`, { subscriptionEnd }).then((r) => r.data),
+  deactivate:    (id: number) => api.post<Professional>(`/professionals/${id}/deactivate`).then((r) => r.data),
+  resendWelcome: (id: number) => api.post<{ message: string }>(`/professionals/${id}/resend-welcome`).then((r) => r.data),
 
   shareLink:                (email: string) =>
     api.post('/professionals/share-link', { email }).then((r) => r.data),
