@@ -192,6 +192,8 @@ export const SecretaryDashboardPage = () => {
 const SharePageEmailModal = ({
   professionalName, professionalId, onClose,
 }: { professionalName: string; professionalId: number; onClose: () => void }) => {
+  const activeProfessional    = useActiveProfessional();
+  const vc                    = useVerticalConfig(activeProfessional?.professionalType);
   const [email,   setEmail]   = useState("");
   const [error,   setError]   = useState("");
   const [loading, setLoading] = useState(false);
