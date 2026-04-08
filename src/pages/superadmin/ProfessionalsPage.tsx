@@ -4,7 +4,8 @@
  */
 import { useState } from "react";
 import { useProfessionals, useCreateProfessional, useUpdateProfessional, useActivateProfessional, useDeactivateProfessional } from "@/hooks/useProfessionals";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { professionalsApi } from "@/api/professionals.api";
 import { plansApi } from "@/api/plans.api";
 import { PageLoader } from "@/components/ui/Spinner";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -25,6 +26,11 @@ export const ProfessionalsPage = () => {
   const updateProf    = useUpdateProfessional();
   const activateProf  = useActivateProfessional();
   const deactivate    = useDeactivateProfessional();
+  const resendWelcome = useMutation({
+    mutationFn: (id: number) => professionalsApi.resendWelcome(id),
+    onSuccess:  (res) => toast.success(res.message),
+    onError:    () => toast.error("No se pudo reenviar el email"),
+  });
 
   const [showForm,     setShowForm]     = useState(false);
   const [editingProf,  setEditingProf]  = useState<Professional | null>(null);
@@ -149,7 +155,7 @@ export const ProfessionalsPage = () => {
             <span className="card-title text-blue-700">Editando: {editingProf.name}</span>
           </div>
           <div className="card-body">
-            <form onSubmit={handleEditSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form key={editingProf.id} onSubmit={handleEditSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="form-label">Nombre completo *</label>
                 <input name="name" defaultValue={editingProf.name} required className="form-input" />
@@ -208,6 +214,16 @@ export const ProfessionalsPage = () => {
                   aria-label={`Editar ${p.name}`}
                 >
                   Editar
+                </button>
+
+                {/* Reenviar email de configuración */}
+                <button
+                  onClick={() => resendWelcome.mutate(p.id)}
+                  disabled={resendWelcome.isPending}
+                  className="btn btn-outline btn-xs"
+                  title="Reenviar email de configuración de contraseña"
+                >
+                  📧 Reenviar acceso
                 </button>
 
                 {/* Activar / Desactivar */}

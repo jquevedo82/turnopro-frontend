@@ -293,7 +293,8 @@ const SecretariesTab = ({
   secretaries: OrgDetail["secretaries"];
 }) => {
   const qc = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
+  const [showForm,   setShowForm]   = useState(false);
+  const [editingSec, setEditingSec] = useState<OrgDetail["secretaries"][number] | null>(null);
   const { register, handleSubmit, reset, watch, setValue } = useForm<{
     name: string; email: string; phone?: string;
   }>();
@@ -325,6 +326,13 @@ const SecretariesTab = ({
   const resendSec = useMutation({
     mutationFn: (secId: number) => organizationsApi.resendSecretaryCredentials(orgId, secId),
     onSuccess:  () => toast.success("Credenciales reenviadas por email"),
+  });
+
+  const updateSec = useMutation({
+    mutationFn: ({ secId, data }: { secId: number; data: { name?: string; phone?: string } }) =>
+      organizationsApi.updateSecretary(orgId, secId, data),
+    onSuccess: () => { invalidate(); toast.success("Secretaria actualizada"); setEditingSec(null); },
+    onError:   () => toast.error("No se pudo actualizar"),
   });
 
   return (
@@ -373,6 +381,52 @@ const SecretariesTab = ({
         </div>
       )}
 
+      {/* Formulario edición secretaria */}
+      {editingSec && (
+        <div className="card border-blue-200">
+          <div className="card-header bg-blue-50">
+            <span className="card-title text-blue-700">Editando: {editingSec.name}</span>
+          </div>
+          <div className="card-body">
+            <form
+              key={editingSec.id}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                updateSec.mutate({
+                  secId: editingSec.id,
+                  data: {
+                    name:  (form.elements.namedItem("name")  as HTMLInputElement).value.trim() || undefined,
+                    phone: (form.elements.namedItem("phone") as HTMLInputElement).value.trim() || undefined,
+                  },
+                });
+              }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            >
+              <div>
+                <label className="form-label">Nombre completo *</label>
+                <input name="name" defaultValue={editingSec.name} required className="form-input" />
+              </div>
+              <div>
+                <label className="form-label">Email</label>
+                <input value={editingSec.email} readOnly className="form-input bg-gray-50 text-gray-400 cursor-not-allowed" />
+                <p className="text-xs text-amber-600 mt-1">⚠️ No editable — es el acceso de la secretaria</p>
+              </div>
+              <div>
+                <label className="form-label">Teléfono</label>
+                <input name="phone" defaultValue={editingSec.phone ?? ""} className="form-input" placeholder="+54 11..." />
+              </div>
+              <div className="sm:col-span-2 flex gap-3">
+                <button type="submit" disabled={updateSec.isPending} className="btn btn-primary">
+                  {updateSec.isPending ? "Guardando..." : "Guardar cambios"}
+                </button>
+                <button type="button" onClick={() => setEditingSec(null)} className="btn btn-outline">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Lista secretarias */}
       <div className="card">
         {secretaries.length === 0 ? (
@@ -396,6 +450,11 @@ const SecretariesTab = ({
                 <span className={`badge ${s.isActive ? "badge-green" : "badge-red"}`}>
                   {s.isActive ? "Activa" : "Inactiva"}
                 </span>
+                <button
+                  onClick={() => { setShowForm(false); setEditingSec(s); }}
+                  className="btn btn-outline btn-xs">
+                  Editar
+                </button>
                 <button
                   onClick={() => resendSec.mutate(s.id)}
                   disabled={resendSec.isPending}

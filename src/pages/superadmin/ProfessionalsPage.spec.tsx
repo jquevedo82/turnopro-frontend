@@ -16,6 +16,7 @@ vi.mock('@/hooks/useProfessionals', () => ({
 }));
 
 vi.mock('@tanstack/react-query', () => ({
+  QueryClient:    class { constructor() {} clear() {} invalidateQueries() {} },
   useQuery:       () => ({ data: [] }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
   useMutation:    ({ mutationFn }: any) => ({ mutateAsync: mutationFn, mutate: mutationFn, isPending: false }),
