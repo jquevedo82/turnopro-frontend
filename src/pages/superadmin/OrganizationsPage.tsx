@@ -329,7 +329,7 @@ const SecretariesTab = ({
   });
 
   const updateSec = useMutation({
-    mutationFn: ({ secId, data }: { secId: number; data: { name?: string; phone?: string } }) =>
+    mutationFn: ({ secId, data }: { secId: number; data: { name?: string; email?: string; phone?: string } }) =>
       organizationsApi.updateSecretary(orgId, secId, data),
     onSuccess: () => { invalidate(); toast.success("Secretaria actualizada"); setEditingSec(null); },
     onError:   () => toast.error("No se pudo actualizar"),
@@ -397,6 +397,7 @@ const SecretariesTab = ({
                   secId: editingSec.id,
                   data: {
                     name:  (form.elements.namedItem("name")  as HTMLInputElement).value.trim() || undefined,
+                    email: (form.elements.namedItem("email") as HTMLInputElement).value.trim() || undefined,
                     phone: (form.elements.namedItem("phone") as HTMLInputElement).value.trim() || undefined,
                   },
                 });
@@ -408,9 +409,9 @@ const SecretariesTab = ({
                 <input name="name" defaultValue={editingSec.name} required className="form-input" />
               </div>
               <div>
-                <label className="form-label">Email</label>
-                <input value={editingSec.email} readOnly className="form-input bg-gray-50 text-gray-400 cursor-not-allowed" />
-                <p className="text-xs text-amber-600 mt-1">⚠️ No editable — es el acceso de la secretaria</p>
+                <label className="form-label">Email *</label>
+                <input name="email" type="email" defaultValue={editingSec.email} required className="form-input" />
+                <p className="text-xs text-gray-400 mt-1">Se notificará a la secretaria si cambia</p>
               </div>
               <div>
                 <label className="form-label">Teléfono</label>

@@ -60,6 +60,7 @@ export const ProfessionalsPage = () => {
     const form = e.currentTarget;
     const data = {
       name:             (form.elements.namedItem("name")             as HTMLInputElement).value.trim(),
+      email:            (form.elements.namedItem("email")            as HTMLInputElement).value.trim(),
       profession:       (form.elements.namedItem("profession")       as HTMLInputElement).value.trim(),
       professionalType: (form.elements.namedItem("professionalType") as HTMLSelectElement).value as any,
     };
@@ -159,6 +160,11 @@ export const ProfessionalsPage = () => {
               <div>
                 <label className="form-label">Nombre completo *</label>
                 <input name="name" defaultValue={editingProf.name} required className="form-input" />
+              </div>
+              <div>
+                <label className="form-label">Email *</label>
+                <input name="email" type="email" defaultValue={editingProf.email} required className="form-input" />
+                <p className="text-xs text-gray-400 mt-1">Se notificará al profesional si cambia</p>
               </div>
               <div>
                 <label className="form-label">Profesión *</label>
