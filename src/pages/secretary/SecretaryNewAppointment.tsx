@@ -19,6 +19,7 @@ import toast            from "@/utils/toast";
 import { PhoneInput }   from "@/components/ui/PhoneInput";
 import { api } from "@/config/api";
 import { Service } from "@/types";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 interface FormData {
   clientName:  string;
@@ -34,6 +35,7 @@ export const SecretaryNewAppointment = () => {
   const navigate             = useNavigate();
   const activeProfessionalId = useAuthStore((s) => s.activeProfessionalId);
   const activeProfessional   = useActiveProfessional();
+  const vc = useVerticalConfig(activeProfessional?.professionalType);
   const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
@@ -107,14 +109,14 @@ export const SecretaryNewAppointment = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-lg">
 
-        {/* Datos del paciente */}
+        {/* Datos del cliente */}
         <div className="card p-5 space-y-4">
           <h2 className="font-semibold text-sm text-gray-700 uppercase tracking-wide">
-            👤 Datos del paciente
+            👤 Datos del {vc.clientLabel.toLowerCase()}
           </h2>
 
           <div>
-            <label className="form-label">Nombre del paciente *</label>
+            <label className="form-label">Nombre del {vc.clientLabel.toLowerCase()} *</label>
             <input
               {...register("clientName", {
                 required: "Requerido",
@@ -149,7 +151,7 @@ export const SecretaryNewAppointment = () => {
             <input
               {...register("clientEmail")}
               className="form-input"
-              placeholder="paciente@email.com"
+              placeholder={`${vc.clientLabel.toLowerCase()}@email.com`}
               type="email"
             />
           </div>
@@ -249,7 +251,7 @@ export const SecretaryNewAppointment = () => {
               📅 Cita el <strong>{selectedDate}</strong> a las <strong>{selectedSlot}hs</strong>
             </p>
             <p className="text-xs text-blue-600 mt-0.5">
-              Se creará como confirmada y se enviará email al paciente si ingresaste uno.
+              Se creará como confirmada y se enviará email al {vc.clientLabel.toLowerCase()} si ingresaste uno.
             </p>
           </div>
         )}

@@ -16,6 +16,7 @@ import { professionalsApi } from "@/api/professionals.api";
 import toast from "@/utils/toast";
 import type { Appointment } from "@/types";
 import { useVerticalConfig } from "@/hooks/useVerticalConfig";
+import { isValidEmail, isValidPhone } from "@/utils/validation";
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -30,10 +31,6 @@ const Modal = ({ title, onClose, children }: { title: string; onClose: () => voi
     </div>
   </div>
 );
-
-// ── Validación de email ───────────────────────────────────────────────────────
-const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-const isValidPhone = (v: string) => /^\+?[0-9]{8,15}$/.test(v.replace(/\s/g, ""));
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export const DashboardPage = () => {
@@ -206,7 +203,7 @@ const ShareEmailModal = ({ professionalName, slug, onClose }: { professionalName
               onChange={(e) => { setEmail(e.target.value); setError(""); }}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               className="form-input"
-              placeholder="paciente@email.com"
+              placeholder={`${vc.clientLabel.toLowerCase()}@email.com`}
               autoFocus
             />
             {error && <p className="form-error">{error}</p>}
@@ -267,6 +264,7 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
   onCancel:   () => void;
   onComplete: () => void;
 }) => {
+  const vc = useVerticalConfig();
   const [resendOpen, setResendOpen] = useState(false);
   const [resendEmailModal, setResendEmailModal] = useState(false);
   const [resendWAModal,    setResendWAModal]    = useState(false);
@@ -316,7 +314,7 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
             {!isDone && (
               <button onClick={() => setResendOpen(!resendOpen)}
                 className={`btn btn-xs btn-outline ${resendOpen ? "bg-gray-100" : ""}`}
-                title="Reenviar al paciente">
+                title={`Reenviar al ${vc.clientLabel.toLowerCase()}`}>
                 📤
               </button>
             )}

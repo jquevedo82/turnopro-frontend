@@ -23,8 +23,8 @@ import { appointmentsApi }          from "@/api/appointments.api";
 import { professionalsApi }         from "@/api/professionals.api";
 import toast                        from "@/utils/toast";
 import type { Appointment }         from "@/types";
-
-const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+import { isValidEmail, isValidPhone } from "@/utils/validation";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -40,13 +40,12 @@ const Modal = ({ title, onClose, children }: { title: string; onClose: () => voi
   </div>
 );
 
-const isValidPhone = (v: string) => /^\+?[0-9]{8,15}$/.test(v.replace(/\s/g, ""));
-
 // ── Componente principal ──────────────────────────────────────────────────────
 export const SecretaryDashboardPage = () => {
   const [date, setDate]      = useState(today());
   const activeProfessionalId = useAuthStore((s) => s.activeProfessionalId);
   const activeProfessional   = useActiveProfessional();
+  const vc                   = useVerticalConfig(activeProfessional?.professionalType);
   const navigate             = useNavigate();
 
   const { data: appointments = [], isLoading } = useTodayForProfessional(activeProfessionalId, date);
@@ -158,10 +157,11 @@ export const SecretaryDashboardPage = () => {
                 key={appt.id}
                 appt={appt}
                 professionalId={activeProfessionalId}
+                clientLabel={vc.clientLabel}
                 isPending={confirmAppt.isPending || cancelAppt.isPending || completeAppt.isPending}
-                onConfirm={() => { if (window.confirm(`¿Confirmar la cita de ${appt.client?.name}?`)) confirmAppt.mutate(appt.id); }}
-                onCancel={()  => { if (window.confirm(`¿Cancelar la cita de ${appt.client?.name}? No se puede deshacer.`)) cancelAppt.mutate(appt.id); }}
-                onComplete={() => { if (window.confirm(`¿Marcar como completada la cita de ${appt.client?.name}?`)) completeAppt.mutate(appt.id); }}
+                onConfirm={() => { if (window.confirm(`¿Confirmar la ${vc.appointmentLabel.toLowerCase()} de ${appt.client?.name}?`)) confirmAppt.mutate(appt.id); }}
+                onCancel={()  => { if (window.confirm(`¿Cancelar la ${vc.appointmentLabel.toLowerCase()} de ${appt.client?.name}? No se puede deshacer.`)) cancelAppt.mutate(appt.id); }}
+                onComplete={() => { if (window.confirm(`¿Marcar como completada la ${vc.appointmentLabel.toLowerCase()} de ${appt.client?.name}?`)) completeAppt.mutate(appt.id); }}
               />
             ))
           )}
@@ -226,7 +226,7 @@ const SharePageEmailModal = ({
           <div>
             <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              className="form-input" placeholder="paciente@email.com" autoFocus />
+              className="form-input" placeholder={`${vc.clientLabel.toLowerCase()}@email.com`} autoFocus />
             {error && <p className="form-error">{error}</p>}
           </div>
           <button onClick={handleSend} disabled={loading || !email} className="btn btn-primary btn-full">
@@ -277,11 +277,12 @@ const SharePageWAModal = ({
 
 // ── Fila de cita ──────────────────────────────────────────────────────────────
 const AppointmentRow = ({
-  appt, professionalId, isPending, onConfirm, onCancel, onComplete,
+  appt, professionalId, isPending, onConfirm, onCancel, onComplete, clientLabel = "Cliente",
 }: {
   appt: Appointment; professionalId: number;
   isPending: boolean;
   onConfirm: () => void; onCancel: () => void; onComplete: () => void;
+  clientLabel?: string;
 }) => {
   const [resendOpen,       setResendOpen]       = useState(false);
   const [resendEmailModal, setResendEmailModal] = useState(false);
@@ -330,7 +331,7 @@ const AppointmentRow = ({
             {!isDone && (
               <button onClick={() => setResendOpen(!resendOpen)}
                 className={`btn btn-xs btn-outline ${resendOpen ? "bg-gray-100" : ""}`}
-                title="Reenviar al paciente">
+                title={`Reenviar al ${clientLabel.toLowerCase()}`}>
                 📤
               </button>
             )}
@@ -350,17 +351,17 @@ const AppointmentRow = ({
       </div>
 
       {resendEmailModal && (
-        <ResendEmailModal appt={appt} professionalId={professionalId} onClose={() => setResendEmailModal(false)} />
+        <ResendEmailModal appt={appt} professionalId={professionalId} clientLabel={clientLabel} onClose={() => setResendEmailModal(false)} />
       )}
       {resendWAModal && (
-        <ResendWAModal appt={appt} appUrl={appUrl} onClose={() => setResendWAModal(false)} />
+        <ResendWAModal appt={appt} appUrl={appUrl} clientLabel={clientLabel} onClose={() => setResendWAModal(false)} />
       )}
     </>
   );
 };
 
 // ── Modal reenviar email ──────────────────────────────────────────────────────
-const ResendEmailModal = ({ appt, professionalId, onClose }: { appt: Appointment; professionalId: number; onClose: () => void }) => {
+const ResendEmailModal = ({ appt, professionalId, onClose, clientLabel = "Cliente" }: { appt: Appointment; professionalId: number; onClose: () => void; clientLabel?: string }) => {
   const [loading, setLoading] = useState(false);
   const [sent,    setSent]    = useState(false);
   const [error,   setError]   = useState("");
@@ -379,7 +380,7 @@ const ResendEmailModal = ({ appt, professionalId, onClose }: { appt: Appointment
   };
 
   return (
-    <Modal title="📧 Reenviar email al paciente" onClose={onClose}>
+    <Modal title={`📧 Reenviar email al ${clientLabel.toLowerCase()}`} onClose={onClose}>
       {sent ? (
         <div className="text-center py-4">
           <div className="text-4xl mb-2">✅</div>
@@ -403,7 +404,7 @@ const ResendEmailModal = ({ appt, professionalId, onClose }: { appt: Appointment
 };
 
 // ── Modal reenviar WhatsApp ───────────────────────────────────────────────────
-const ResendWAModal = ({ appt, appUrl, onClose }: { appt: Appointment; appUrl: string; onClose: () => void }) => {
+const ResendWAModal = ({ appt, appUrl, onClose, clientLabel = "Cliente" }: { appt: Appointment; appUrl: string; onClose: () => void; clientLabel?: string }) => {
   const [phone, setPhone] = useState(appt.client?.phone ?? "");
   const [error, setError] = useState("");
 
@@ -422,7 +423,7 @@ const ResendWAModal = ({ appt, appUrl, onClose }: { appt: Appointment; appUrl: s
   };
 
   return (
-    <Modal title="💬 Reenviar WhatsApp al paciente" onClose={onClose}>
+    <Modal title={`💬 Reenviar WhatsApp al ${clientLabel.toLowerCase()}`} onClose={onClose}>
       <div className="space-y-3">
         <div className="bg-gray-50 rounded-xl p-4 space-y-1">
           <p className="text-sm font-medium text-gray-700">{appt.client?.name}</p>
@@ -434,7 +435,7 @@ const ResendWAModal = ({ appt, appUrl, onClose }: { appt: Appointment; appUrl: s
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             className="form-input" placeholder="+54 9 11 1234-5678" autoFocus />
           {error && <p className="form-error">{error}</p>}
-          <p className="text-xs text-gray-400 mt-1">Pre-cargado con el número del paciente. Podés editarlo.</p>
+          <p className="text-xs text-gray-400 mt-1">Pre-cargado con el número del {clientLabel.toLowerCase()}. Podés editarlo.</p>
         </div>
         <button onClick={handleSend} disabled={!phone} className="btn btn-success btn-full">
           💬 Abrir WhatsApp

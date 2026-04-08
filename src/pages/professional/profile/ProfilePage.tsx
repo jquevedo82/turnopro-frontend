@@ -22,13 +22,14 @@ interface ProfileForm {
   publicEmail:        string;
   instagram:          string;
   facebook:           string;
-  autoConfirm:        boolean;
-  slotDurationMinutes: number;
-  bufferMinutes:       number;
-  minAdvanceHours:     number;
-  maxAdvanceDays:      number;
-  cancellationHours:   number;
-  pendingExpiryHours:  number;
+  autoConfirm:              boolean;
+  slotDurationMinutes:      number;
+  bufferMinutes:            number;
+  minAdvanceHours:          number;
+  maxAdvanceDays:           number;
+  cancellationHours:        number;
+  pendingExpiryHours:       number;
+  arrivalToleranceMinutes:  number;
 }
 
 export const ProfilePage = () => {
@@ -75,8 +76,9 @@ export const ProfilePage = () => {
       bufferMinutes:       prof.bufferMinutes       ?? 5,
       minAdvanceHours:     prof.minAdvanceHours     ?? 1,
       maxAdvanceDays:      prof.maxAdvanceDays      ?? 30,
-      cancellationHours:   prof.cancellationHours   ?? 24,
-      pendingExpiryHours:  prof.pendingExpiryHours  ?? 2,
+      cancellationHours:        prof.cancellationHours        ?? 24,
+      pendingExpiryHours:       prof.pendingExpiryHours       ?? 2,
+      arrivalToleranceMinutes:  prof.arrivalToleranceMinutes  ?? 15,
     });
   }, [prof, reset]);
 
@@ -89,7 +91,8 @@ export const ProfilePage = () => {
       minAdvanceHours:     Number(data.minAdvanceHours),
       maxAdvanceDays:      Number(data.maxAdvanceDays),
       cancellationHours:   Number(data.cancellationHours),
-      pendingExpiryHours:  Number(data.pendingExpiryHours),
+      pendingExpiryHours:       Number(data.pendingExpiryHours),
+      arrivalToleranceMinutes:  Number(data.arrivalToleranceMinutes),
     });
   };
 
@@ -195,7 +198,8 @@ export const ProfilePage = () => {
               { key: "minAdvanceHours",     label: "Anticipación mínima",    unit: "horas",  min: 0  },
               { key: "maxAdvanceDays",      label: "Anticipación máxima",    unit: "días",   min: 1  },
               { key: "cancellationHours",   label: "Plazo de cancelación",   unit: "horas",  min: 0  },
-              { key: "pendingExpiryHours",  label: "Expiran pendientes en",  unit: "horas",  min: 1  },
+              { key: "pendingExpiryHours",       label: "Expiran pendientes en",    unit: "horas", min: 1 },
+            { key: "arrivalToleranceMinutes",  label: "Tolerancia de llegada",    unit: "min",   min: 0 },
             ] as const).map(({ key, label, unit, min }) => (
               <div key={key}>
                 <label className="form-label">

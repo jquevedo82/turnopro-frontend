@@ -7,11 +7,13 @@ import type { Appointment } from "@/types";
 import { useAuthStore } from "@/store/auth.store";
 import { appointmentsApi } from "@/api/appointments.api";
 import toast from "@/utils/toast";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 export const TomorrowPage = () => {
   const { data: appointments = [], isLoading } = useTomorrow();
   const markReminder = useMarkReminder();
   const { user } = useAuthStore();
+  const vc = useVerticalConfig();
 
   const pendingCount = appointments.filter((a) => !a.reminderSent).length;
 
@@ -49,7 +51,7 @@ export const TomorrowPage = () => {
       {pendingCount > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4">
           <p className="text-sm text-blue-800">
-            📋 <strong>{pendingCount}</strong> paciente{pendingCount > 1 ? "s" : ""} sin recordatorio
+            📋 <strong>{pendingCount}</strong> {pendingCount > 1 ? vc.clientLabelPlural.toLowerCase() : vc.clientLabel.toLowerCase()} sin recordatorio
           </p>
         </div>
       )}

@@ -12,6 +12,7 @@
  */
 import { create } from "zustand";
 import type { AuthUser, SecretaryProfessional } from "@/types";
+import { queryClient } from "@/config/queryClient";
 
 interface AuthState {
   token: string | null;
@@ -51,6 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem("tp_token");
     localStorage.removeItem("tp_user");
     sessionStorage.removeItem("tp_active_prof");
+    queryClient.clear();
     set({ token: null, user: null, activeProfessionalId: null });
   },
 

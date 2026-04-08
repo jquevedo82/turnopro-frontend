@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+// Mock queryClient para no necesitar el provider real
+const clearMock = vi.fn();
+vi.mock('@/config/queryClient', () => ({ queryClient: { clear: clearMock } }));
+
 // Mock localStorage antes de importar el store
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
@@ -38,5 +42,29 @@ describe('auth.store — safeParseUser', () => {
 
     expect(useAuthStore.getState().user).toBeNull();
     expect(localStorageMock.getItem('tp_user')).toBeNull();
+  });
+});
+
+describe('auth.store — logout', () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    clearMock.mockClear();
+  });
+
+  it('limpia localStorage, sessionStorage y llama queryClient.clear()', async () => {
+    vi.resetModules();
+    vi.mock('@/config/queryClient', () => ({ queryClient: { clear: clearMock } }));
+    const { useAuthStore } = await import('./auth.store');
+
+    localStorageMock.setItem('tp_token', 'tok123');
+    localStorageMock.setItem('tp_user', JSON.stringify({ id: 1 }));
+    localStorageMock.setItem('tp_active_prof', '5');
+
+    useAuthStore.getState().logout();
+
+    expect(localStorageMock.getItem('tp_token')).toBeNull();
+    expect(localStorageMock.getItem('tp_user')).toBeNull();
+    expect(localStorageMock.getItem('tp_active_prof')).toBeNull();
+    expect(clearMock).toHaveBeenCalledOnce();
   });
 });

@@ -37,11 +37,12 @@ export interface PublicQueueEntry {
 
 /** Profesional reducido que devuelve el login de secretaria para popular el selector */
 export interface SecretaryProfessional {
-  id:         number;
-  name:       string;
-  profession: string;
-  slug:       string;
-  avatar:     string | null;
+  id:               number;
+  name:             string;
+  profession:       string;
+  slug:             string;
+  avatar:           string | null;
+  professionalType?: 'health' | 'beauty' | 'wellness' | 'other';
 }
 
 export interface AuthUser {
