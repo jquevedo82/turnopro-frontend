@@ -5,7 +5,7 @@ export interface Professional {
   logo: string | null; instagram: string; facebook: string; gallery: string[]
   plan: Plan | null; planId: number | null; subscriptionStart: string | null; subscriptionEnd: string | null
   isActive: boolean; autoConfirm: boolean; slotDurationMinutes: number; bufferMinutes: number
-  minAdvanceHours: number; maxAdvanceDays: number; cancellationHours: number; pendingExpiryHours: number; createdAt: string
+  minAdvanceHours: number; maxAdvanceDays: number; cancellationHours: number; pendingExpiryHours: number; arrivalToleranceMinutes: number; createdAt: string
   professionalType?: 'health' | 'beauty' | 'wellness' | 'other'
 }
 export interface Service { id: number; professionalId: number; name: string; description: string; durationMinutes: number; bufferMinutes: number | null; isActive: boolean }

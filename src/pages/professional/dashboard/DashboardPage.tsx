@@ -167,6 +167,8 @@ export const DashboardPage = () => {
 
 // ── Modal: compartir por email ────────────────────────────────────────────────
 const ShareEmailModal = ({ professionalName, slug, onClose }: { professionalName: string; slug: string; onClose: () => void }) => {
+  const { user }              = useAuthStore();
+  const vc                    = useVerticalConfig(user?.professionalType);
   const [email,   setEmail]   = useState("");
   const [error,   setError]   = useState("");
   const [loading, setLoading] = useState(false);
