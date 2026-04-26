@@ -18,8 +18,7 @@ export const ServicesPage = () => {
   const onSubmit = async (data: ServiceForm) => {
     const payload = {
       ...data,
-      durationMinutes: Number(data.durationMinutes),
-      bufferMinutes:   data.bufferMinutes ? Number(data.bufferMinutes) : undefined,
+      bufferMinutes: data.bufferMinutes || undefined,
     };
     if (editing) {
       await updateSvc.mutateAsync({ id: editing.id, data: payload });
@@ -77,13 +76,21 @@ export const ServicesPage = () => {
               </div>
               <div>
                 <label className="form-label">Duración (minutos) *</label>
-                <input type="number" {...register("durationMinutes", { required: true, min: 5 })}
-                  className="form-input" />
+                <input type="number" {...register("durationMinutes", {
+                  required:       "Requerido",
+                  min:            { value: 5,   message: "Mínimo 5 minutos" },
+                  max:            { value: 480, message: "Máximo 480 minutos" },
+                  valueAsNumber:  true,
+                })} className="form-input" />
+                {errors.durationMinutes && <p className="form-error">{errors.durationMinutes.message}</p>}
               </div>
               <div>
                 <label className="form-label">Buffer post-turno (minutos)</label>
-                <input type="number" {...register("bufferMinutes")} className="form-input"
-                  placeholder="Usa el del perfil" />
+                <input type="number" {...register("bufferMinutes", {
+                  min:           { value: 0, message: "No puede ser negativo" },
+                  valueAsNumber: true,
+                })} className="form-input" placeholder="Usa el del perfil" />
+                {errors.bufferMinutes && <p className="form-error">{errors.bufferMinutes.message}</p>}
               </div>
               <div className="sm:col-span-2 flex gap-3">
                 <button type="submit"
