@@ -37,6 +37,14 @@ api.interceptors.response.use(
         useAuthStore.getState().logout();
       }
     }
+    // Sin esto, err.message es el genérico de axios ("Request failed with status
+    // code 400") — el mensaje real que arma el backend (ej. "El horario ya no está
+    // disponible") queda solo en err.response.data.message, invisible para el usuario
+    // en los lugares que muestran error?.message directo (BookingForm, etc.)
+    const backendMessage = err.response?.data?.message;
+    if (backendMessage) {
+      err.message = Array.isArray(backendMessage) ? backendMessage.join(', ') : backendMessage;
+    }
     return Promise.reject(err);
   }
 );
