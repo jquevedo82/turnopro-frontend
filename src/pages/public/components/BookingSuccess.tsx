@@ -1,5 +1,6 @@
 import type { Appointment, Professional } from "@/types";
 import { formatDate } from "@/utils/dates";
+import { waUrl } from "@/utils/whatsapp";
 
 interface Props { appointment: Appointment; professional: Professional; onNew: () => void }
 
@@ -32,9 +33,10 @@ export const BookingSuccess = ({ appointment, professional, onNew }: Props) => (
       {/* WhatsApp al profesional */}
       {(professional.whatsappPhone || professional.phone) && (
         <a
-          href={`https://wa.me/${(professional.whatsappPhone || professional.phone).replace(/[^0-9+]/g, "")}?text=${encodeURIComponent(
+          href={waUrl(
+            professional.whatsappPhone || professional.phone,
             `Hola ${professional.name}, reservé una cita para el ${appointment.date} a las ${appointment.startTime?.substring(0,5)}hs.`
-          )}`}
+          )}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm text-white mb-3"

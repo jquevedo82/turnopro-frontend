@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { appointmentsApi } from "@/api/appointments.api";
 import toast from "@/utils/toast";
 import { useVerticalConfig } from "@/hooks/useVerticalConfig";
+import { waUrl } from "@/utils/whatsapp";
 
 export const TomorrowPage = () => {
   const { data: appointments = [], isLoading } = useTomorrow();
@@ -22,14 +23,13 @@ export const TomorrowPage = () => {
     const appUrl  = import.meta.env.VITE_APP_URL || window.location.origin;
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     const dateStr  = tomorrow.toLocaleDateString("es-ES", { weekday:"long", day:"numeric", month:"long" });
-    const msg = encodeURIComponent(
+    const msg =
       `Hola ${appt.client?.name}! 👋 Te recordamos tu cita mañana:\n\n` +
       `📅 ${dateStr}\n⏰ ${appt.startTime}hs\n👨‍⚕️ ${user?.name}\n\n` +
       `¿Vas a asistir?\n\n` +
       `✅ Confirmar → ${appUrl}/cita/${appt.token}/reconfirmar\n` +
-      `❌ Cancelar  → ${appUrl}/cita/${appt.token}/cancelar`
-    );
-    return `https://wa.me/${phone}?text=${msg}`;
+      `❌ Cancelar  → ${appUrl}/cita/${appt.token}/cancelar`;
+    return waUrl(phone, msg);
   };
 
   const handleWA = (appt: Appointment) => {

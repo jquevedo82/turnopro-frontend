@@ -7,6 +7,7 @@ import { usePublicProfile, usePublicServices } from "@/hooks/usePublic";
 import { useCreateAppointment } from "@/hooks/useAppointments";
 import { useAvailableDays, useSlots } from "@/hooks/useAvailability";
 import { PageLoader } from "@/components/ui/Spinner";
+import { optimizedCloudinaryUrl } from "@/utils/images";
 import { ServiceSelector } from "./components/ServiceSelector";
 import { BookingCalendar }  from "./components/BookingCalendar";
 import { SlotPicker }       from "./components/SlotPicker";
@@ -88,7 +89,7 @@ export const PublicPage = () => {
           <div className="flex items-center gap-4 mb-3">
             <div className="w-[168px] h-[168px] sm:w-48 sm:h-48 rounded-full bg-gradient-to-br from-blue-400 to-violet-500 flex items-center justify-center text-4xl sm:text-5xl font-bold border-2 border-white/30 flex-shrink-0 overflow-hidden">
               {professional.avatar
-                ? <img src={professional.avatar} alt={professional.name} className="w-full h-full object-cover" />
+                ? <img src={optimizedCloudinaryUrl(professional.avatar, 300)} alt={professional.name} className="w-full h-full object-cover" />
                 : professional.name.charAt(0)
               }
             </div>
