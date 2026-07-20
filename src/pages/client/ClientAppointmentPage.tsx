@@ -10,6 +10,7 @@ import { appointmentsApi } from "@/api/appointments.api";
 import { PageLoader } from "@/components/ui/Spinner";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatDate } from "@/utils/dates";
+import { waUrl } from "@/utils/whatsapp";
 
 export const ClientAppointmentPage = ({ autoCancel = false }: { autoCancel?: boolean }) => {
   const { token = "" } = useParams<{ token: string }>();
@@ -126,9 +127,10 @@ export const ClientAppointmentPage = ({ autoCancel = false }: { autoCancel?: boo
         {/* Botón WhatsApp al profesional */}
         {appt.professional?.whatsappPhone || appt.professional?.phone ? (
           <a
-            href={`https://wa.me/${(appt.professional.whatsappPhone || appt.professional.phone).replace(/[^0-9+]/g, '')}?text=${encodeURIComponent(
+            href={waUrl(
+              appt.professional.whatsappPhone || appt.professional.phone,
               `Hola ${appt.professional?.name}, le escribo por mi cita del ${appt.date} a las ${appt.startTime?.substring(0,5)}hs.`
-            )}`}
+            )}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm text-white mt-2"

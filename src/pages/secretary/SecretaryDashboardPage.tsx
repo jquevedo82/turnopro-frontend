@@ -25,6 +25,7 @@ import toast                        from "@/utils/toast";
 import type { Appointment }         from "@/types";
 import { isValidEmail, isValidPhone } from "@/utils/validation";
 import { useVerticalConfig } from "@/hooks/useVerticalConfig";
+import { waUrl } from "@/utils/whatsapp";
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -249,11 +250,8 @@ const SharePageWAModal = ({
 
   const handleSend = () => {
     if (!phone.trim()) { setError("Ingresá un número"); return; }
-    const clean = phone.replace(/\s/g, "");
-    const text  = encodeURIComponent(
-      `Hola! 👋 Te comparto el link para reservar tu turno online con *${professionalName}*:\n\n${appUrl}/${slug}\n\nRápido y sin llamadas 🗓️`
-    );
-    window.open(`https://wa.me/${clean}?text=${text}`, "_blank");
+    const text = `Hola! 👋 Te comparto el link para reservar tu turno online con *${professionalName}*:\n\n${appUrl}/${slug}\n\nRápido y sin llamadas 🗓️`;
+    window.open(waUrl(phone, text), "_blank");
     onClose();
   };
 
@@ -412,15 +410,13 @@ const ResendWAModal = ({ appt, appUrl, onClose, clientLabel = "Cliente" }: { app
 
   const handleSend = () => {
     if (!isValidPhone(phone)) { setError("Ingresá un número válido con código de país. Ej: +5491112345678"); return; }
-    const clean = phone.replace(/\s/g, "");
-    const text  = encodeURIComponent(
+    const text =
       `Hola ${appt.client?.name}! 👋\n\n` +
       `Te recordamos tu cita:\n` +
       `📅 *${appt.date}* a las *${appt.startTime?.substring(0,5)}hs*\n` +
       `🩺 ${appt.service?.name}\n\n` +
-      `Ver y gestionar tu cita: ${appUrl}/cita/${appt.token}`
-    );
-    window.open(`https://wa.me/${clean}?text=${text}`, "_blank");
+      `Ver y gestionar tu cita: ${appUrl}/cita/${appt.token}`;
+    window.open(waUrl(phone, text), "_blank");
     onClose();
   };
 
