@@ -12,6 +12,7 @@ export interface Service { id: number; professionalId: number; name: string; des
 export interface ProfessionalSchedule { id: number; professionalId: number; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }
 export interface ScheduleException { id: number; professionalId: number; date: string; isClosed: boolean; customStartTime: string | null; customEndTime: string | null; reason: string }
 export interface Client { id: number; professionalId: number; name: string; email: string; phone: string; createdAt: string }
+export interface PaginatedClients { items: Client[]; total: number }
 export type AppointmentStatus =
   | "pending" | "confirmed" | "reconfirmed"
   | "arrived" | "in_progress"
