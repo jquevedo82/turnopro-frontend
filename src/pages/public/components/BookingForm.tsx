@@ -5,9 +5,13 @@ import { formatDate } from "@/utils/dates";
 import type { Service } from "@/types";
 
 interface FormData { name: string; email: string; phone: string; notes?: string }
-interface Props { service: Service; date: string; slot: string; onSubmit: (d: FormData) => void; loading: boolean; error?: string }
+interface Props {
+  service: Service; date: string; slot: string; onSubmit: (d: FormData) => void; loading: boolean; error?: string;
+  /** País del profesional — preselecciona el código de teléfono del paciente (ej: "+57") */
+  defaultCountryCode?: string;
+}
 
-export const BookingForm = ({ service, date, slot, onSubmit, loading, error }: Props) => {
+export const BookingForm = ({ service, date, slot, onSubmit, loading, error, defaultCountryCode }: Props) => {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>();
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
@@ -42,6 +46,7 @@ export const BookingForm = ({ service, date, slot, onSubmit, loading, error }: P
           <PhoneInput
             value={watch("phone") ?? ""}
             onChange={(v) => setValue("phone", v, { shouldValidate: true })}
+            defaultCountryCode={defaultCountryCode}
             required
           />
           {errors.phone && <p className="form-error">{errors.phone.message}</p>}

@@ -7,6 +7,7 @@ export interface Professional {
   isActive: boolean; autoConfirm: boolean; slotDurationMinutes: number; bufferMinutes: number
   minAdvanceHours: number; maxAdvanceDays: number; cancellationHours: number; pendingExpiryHours: number; arrivalToleranceMinutes: number; createdAt: string
   professionalType?: 'health' | 'beauty' | 'wellness' | 'other'
+  country?: string | null // '+54' | '+57' | '+58' — default del selector de país en el teléfono del cliente
 }
 export interface Service { id: number; professionalId: number; name: string; description: string; durationMinutes: number; bufferMinutes: number | null; isActive: boolean }
 export interface ProfessionalSchedule { id: number; professionalId: number; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }

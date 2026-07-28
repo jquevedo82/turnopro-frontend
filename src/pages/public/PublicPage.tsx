@@ -203,6 +203,7 @@ export const PublicPage = () => {
               onSubmit={handleBook}
               loading={createAppt.isPending}
               error={createAppt.error?.message}
+              defaultCountryCode={professional.country ?? undefined}
             />
           </section>
         )}
