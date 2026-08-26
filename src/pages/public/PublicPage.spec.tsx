@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import type { Professional } from '@/types';
+import type { Professional, PublicReview } from '@/types';
 
 const baseProfessional: Professional = {
   id: 1, name: 'Dr. García', email: 'garcia@test.com', phone: '+5491112345678',
@@ -28,6 +28,12 @@ vi.mock('@/hooks/useAvailability', () => ({
 
 vi.mock('@/hooks/useAppointments', () => ({
   useCreateAppointment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+
+const mockUsePublicReviews = vi.fn();
+mockUsePublicReviews.mockReturnValue({ data: [] as PublicReview[] });
+vi.mock('@/hooks/useReviews', () => ({
+  usePublicReviews: () => mockUsePublicReviews(),
 }));
 
 import { PublicPage } from './PublicPage';
@@ -64,5 +70,30 @@ describe('PublicPage — imagen del profesional', () => {
 
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
     expect(screen.getByText('D')).toBeInTheDocument();
+  });
+});
+
+describe('PublicPage — sección de reseñas', () => {
+  it('no muestra la sección si no hay reseñas publicadas', () => {
+    mockUsePublicProfile.mockReturnValue({ data: baseProfessional, isLoading: false, error: null });
+    mockUsePublicReviews.mockReturnValue({ data: [] });
+
+    renderPage();
+
+    expect(screen.queryByText('Opiniones')).not.toBeInTheDocument();
+  });
+
+  it('muestra las reseñas publicadas con su calificación y comentario', () => {
+    mockUsePublicProfile.mockReturnValue({ data: baseProfessional, isLoading: false, error: null });
+    mockUsePublicReviews.mockReturnValue({
+      data: [{ id: 1, reviewerName: 'M. G.', rating: 5, comment: 'Excelente atención', submittedAt: '2026-08-20' }],
+    });
+
+    renderPage();
+
+    expect(screen.getByText('Opiniones')).toBeInTheDocument();
+    expect(screen.getByText('M. G.')).toBeInTheDocument();
+    expect(screen.getByText('Excelente atención')).toBeInTheDocument();
+    expect(screen.getByText('⭐⭐⭐⭐⭐')).toBeInTheDocument();
   });
 });

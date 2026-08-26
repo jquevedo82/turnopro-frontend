@@ -35,6 +35,36 @@ export interface PublicQueueEntry {
   status:   "arrived" | "in_progress";
 }
 
+// ── Reseñas ──────────────────────────────────────────────────────────────────
+
+export type ReviewStatus = "invitado" | "pendiente" | "publicada" | "rechazada";
+
+/** Invitación abierta por token — GET /reviews/token/:token */
+export interface ReviewInvite {
+  reviewerName: string;
+  status:       ReviewStatus;
+  professional: { name: string };
+}
+
+/** Reseña publicada, tal como la ve el público — GET /public/:slug/reviews */
+export interface PublicReview {
+  id:           number;
+  reviewerName: string; // Nombre completo o iniciales, ya redactado por el backend según el vertical
+  rating:       number;
+  comment:      string;
+  submittedAt:  string;
+}
+
+/** Reseña tal como la ve el profesional al moderar — GET /reviews */
+export interface ReviewAdmin {
+  id:           number;
+  reviewerName: string;
+  rating:       number | null;
+  comment:      string | null;
+  status:       ReviewStatus;
+  submittedAt:  string | null;
+}
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 /** Profesional reducido que devuelve el login de secretaria para popular el selector */
