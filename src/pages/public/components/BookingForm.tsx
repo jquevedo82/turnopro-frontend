@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatDate } from "@/utils/dates";
+import { NAME_PATTERN } from "@/utils/validation";
 import type { Service } from "@/types";
 
 interface FormData { name: string; email: string; phone: string; notes?: string }
@@ -25,7 +26,7 @@ export const BookingForm = ({ service, date, slot, onSubmit, loading, error, def
             {...register("name", {
               required: "Requerido",
               pattern: {
-                value: /^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]+\s+[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]+/,
+                value: NAME_PATTERN,
                 message: "Ingresá al menos un nombre y un apellido",
               },
             })}
