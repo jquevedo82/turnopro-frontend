@@ -45,6 +45,7 @@ export interface SecretaryProfessional {
   slug:             string;
   avatar:           string | null;
   professionalType?: 'health' | 'beauty' | 'wellness' | 'other';
+  country?:         string | null;
 }
 
 export interface AuthUser {
@@ -55,6 +56,7 @@ export interface AuthUser {
   // Solo para profesionales
   slug?:            string;
   professionalType?: 'health' | 'beauty' | 'wellness' | 'other';
+  country?:         string | null;
   // Solo para secretarias
   organizationId?:  number;
   professionals?:   SecretaryProfessional[]; // lista para el selector "Trabajando como..."

@@ -158,6 +158,7 @@ export const ProfilePage = () => {
               <PhoneInput
                 value={watch("phone") ?? ""}
                 onChange={(v) => setValue("phone", v, { shouldDirty: true })}
+                defaultCountryCode={watch("country") || undefined}
               />
             </div>
             <div>
@@ -165,6 +166,7 @@ export const ProfilePage = () => {
               <PhoneInput
                 value={watch("whatsappPhone") ?? ""}
                 onChange={(v) => setValue("whatsappPhone", v, { shouldDirty: true })}
+                defaultCountryCode={watch("country") || undefined}
               />
               <p className="text-xs text-gray-400 mt-1">📲 A este número te llegan los avisos de nuevas citas</p>
             </div>
