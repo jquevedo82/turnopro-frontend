@@ -3,6 +3,7 @@ import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatDate } from "@/utils/dates";
 import { NAME_PATTERN } from "@/utils/validation";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 import type { Service } from "@/types";
 
 interface FormData { name: string; email: string; phone: string; notes?: string }
@@ -10,10 +11,13 @@ interface Props {
   service: Service; date: string; slot: string; onSubmit: (d: FormData) => void; loading: boolean; error?: string;
   /** País del profesional — preselecciona el código de teléfono del paciente (ej: "+57") */
   defaultCountryCode?: string;
+  /** Tipo de profesional — adapta "Paciente"/"Cliente" según el vertical (health/beauty/wellness/other) */
+  professionalType?: string | null;
 }
 
-export const BookingForm = ({ service, date, slot, onSubmit, loading, error, defaultCountryCode }: Props) => {
+export const BookingForm = ({ service, date, slot, onSubmit, loading, error, defaultCountryCode, professionalType }: Props) => {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>();
+  const vc = useVerticalConfig(professionalType);
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
       <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-5 text-sm text-blue-800">
@@ -21,7 +25,7 @@ export const BookingForm = ({ service, date, slot, onSubmit, loading, error, def
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="form-label">Nombre del paciente *</label>
+          <label className="form-label">Nombre del {vc.clientLabel.toLowerCase()} *</label>
           <input
             {...register("name", {
               required: "Requerido",
@@ -34,7 +38,7 @@ export const BookingForm = ({ service, date, slot, onSubmit, loading, error, def
             placeholder="Ej: Juan García"
             autoCapitalize="words"
           />
-          <p className="text-xs text-gray-400 mt-1">Ingresá el primer nombre y primer apellido del paciente</p>
+          <p className="text-xs text-gray-400 mt-1">Ingresá el primer nombre y primer apellido del {vc.clientLabel.toLowerCase()}</p>
           {errors.name && <p className="form-error">{errors.name.message}</p>}
         </div>
         <div>

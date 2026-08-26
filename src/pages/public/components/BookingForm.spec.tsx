@@ -29,3 +29,23 @@ describe('BookingForm — país del teléfono por defecto', () => {
     expect(select.value).toBe('+54');
   });
 });
+
+describe('BookingForm — terminología por vertical', () => {
+  it('usa "paciente" por default (vertical health)', () => {
+    render(
+      <BookingForm service={service} date="2026-08-01" slot="10:00" onSubmit={vi.fn()} loading={false} />,
+    );
+    expect(screen.getByText('Nombre del paciente *')).toBeInTheDocument();
+  });
+
+  it('usa "cliente" para un profesional del vertical beauty', () => {
+    render(
+      <BookingForm
+        service={service} date="2026-08-01" slot="10:00"
+        onSubmit={vi.fn()} loading={false} professionalType="beauty"
+      />,
+    );
+    expect(screen.getByText('Nombre del cliente *')).toBeInTheDocument();
+    expect(screen.queryByText('Nombre del paciente *')).not.toBeInTheDocument();
+  });
+});

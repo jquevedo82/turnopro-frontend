@@ -1,18 +1,22 @@
 import type { Appointment, Professional } from "@/types";
 import { formatDate } from "@/utils/dates";
 import { waUrl } from "@/utils/whatsapp";
+import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
 interface Props { appointment: Appointment; professional: Professional; onNew: () => void }
 
-export const BookingSuccess = ({ appointment, professional, onNew }: Props) => (
+export const BookingSuccess = ({ appointment, professional, onNew }: Props) => {
+  const vc = useVerticalConfig(professional.professionalType);
+  const apptLabel = vc.appointmentLabel.toLowerCase();
+  return (
   <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-emerald-50 to-white p-4">
     <div className="max-w-md w-full text-center">
       <div className="text-6xl mb-4">🎉</div>
-      <h1 className="font-display text-2xl text-emerald-700 mb-2">¡Cita solicitada!</h1>
+      <h1 className="font-display text-2xl text-emerald-700 mb-2">¡Solicitud de {apptLabel} enviada!</h1>
       <p className="text-gray-500 text-sm mb-6">
         {appointment.status === "pending"
           ? "Tu solicitud fue recibida. El profesional la confirmará a la brevedad."
-          : "Te llegó un email con todos los detalles y un link para gestionar tu cita."}
+          : `Te llegó un email con todos los detalles y un link para gestionar tu ${apptLabel}.`}
       </p>
       <div className="bg-white rounded-xl border border-gray-200 p-5 text-left space-y-3 shadow-sm mb-6">
         {[
@@ -35,7 +39,7 @@ export const BookingSuccess = ({ appointment, professional, onNew }: Props) => (
         <a
           href={waUrl(
             professional.whatsappPhone || professional.phone,
-            `Hola ${professional.name}, reservé una cita para el ${appointment.date} a las ${appointment.startTime?.substring(0,5)}hs.`
+            `Hola ${professional.name}, hice una reserva de ${apptLabel} para el ${appointment.date} a las ${appointment.startTime?.substring(0,5)}hs.`
           )}
           target="_blank"
           rel="noopener noreferrer"
@@ -45,7 +49,8 @@ export const BookingSuccess = ({ appointment, professional, onNew }: Props) => (
           💬 Escribir al profesional por WhatsApp
         </a>
       )}
-      <button onClick={onNew} className="btn btn-outline w-full">Reservar otra cita</button>
+      <button onClick={onNew} className="btn btn-outline w-full">Hacer otra reserva</button>
     </div>
   </div>
-);
+  );
+};
