@@ -14,6 +14,12 @@ export const useToday = (date?: string) =>
 export const useTomorrow = () =>
   useQuery({ queryKey: ["appointments", "tomorrow"], queryFn: appointmentsApi.getTomorrow });
 
+export const useStats = () =>
+  useQuery({ queryKey: ["appointments", "stats"], queryFn: appointmentsApi.getStats });
+
+export const useAdminStats = () =>
+  useQuery({ queryKey: ["appointments", "admin-stats"], queryFn: appointmentsApi.getAdminStats });
+
 export const useAppointmentByToken = (token: string) =>
   useQuery({ queryKey: ["appointment", token], queryFn: () => appointmentsApi.getByToken(token), enabled: !!token });
 
@@ -107,6 +113,14 @@ export const useCompleteForProfessional = (professionalId: number | null) => {
   return useMutation({
     mutationFn: (id: number) => appointmentsApi.completeForProfessional(id, professionalId!),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); toast.success("Cita completada"); },
+  });
+};
+
+export const useMarkReminderForProfessional = (professionalId: number | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.markReminderForProfessional(id, professionalId!),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["appointments", "tomorrow"] }),
   });
 };
 

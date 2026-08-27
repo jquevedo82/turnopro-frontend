@@ -3,12 +3,14 @@
  * Muestra resumen de profesionales activos, inactivos y próximos a vencer.
  */
 import { useProfessionals } from "@/hooks/useProfessionals";
+import { useAdminStats } from "@/hooks/useAppointments";
 import { PageLoader } from "@/components/ui/Spinner";
 import { formatDateShort } from "@/utils/dates";
 import { useNavigate } from "react-router-dom";
 
 export const AdminDashboard = () => {
   const { data: professionals = [], isLoading } = useProfessionals();
+  const { data: adminStats }  = useAdminStats();
   const navigate = useNavigate();
 
   if (isLoading) return <PageLoader />;
@@ -16,6 +18,14 @@ export const AdminDashboard = () => {
   const active   = professionals.filter((p) => p.isActive).length;
   const inactive = professionals.filter((p) => !p.isActive).length;
   const today    = new Date();
+
+  // Distribución por plan — el plan ya viene cargado en cada profesional (relations: ['plan']),
+  // no hace falta un endpoint aparte para esto.
+  const planCounts = new Map<string, number>();
+  for (const p of professionals) {
+    const label = p.plan?.name ?? "Sin plan";
+    planCounts.set(label, (planCounts.get(label) ?? 0) + 1);
+  }
 
   // Próximos a vencer: activos con subscriptionEnd en los próximos 7 días
   const expiringSoon = professionals.filter((p) => {
@@ -35,7 +45,7 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div className="stat-card">
           <div className="stat-label">Total</div>
           <div className="stat-value">{professionals.length}</div>
@@ -51,7 +61,27 @@ export const AdminDashboard = () => {
           <div className="stat-value text-red-500">{inactive}</div>
           <div className="stat-sub">sin suscripción</div>
         </div>
+        <div className="stat-card">
+          <div className="stat-label">Citas atendidas</div>
+          <div className="stat-value text-blue-600">{adminStats?.totalCompleted ?? "—"}</div>
+          <div className="stat-sub">en todo el sistema</div>
+        </div>
       </div>
+
+      {/* Distribución por plan */}
+      {planCounts.size > 0 && (
+        <div className="card mb-6">
+          <div className="card-header"><span className="card-title">Distribución por plan</span></div>
+          <div className="px-5 py-4 flex flex-wrap gap-3">
+            {[...planCounts.entries()].map(([label, count]) => (
+              <div key={label} className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                <span className="text-sm font-medium text-gray-700">{label}</span>
+                <span className="badge badge-blue">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Alertas de vencimiento */}
       {expiringSoon.length > 0 && (

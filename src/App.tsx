@@ -41,6 +41,7 @@ import { ProfilePage }        from "@/pages/professional/profile/ProfilePage";
 import { ClientsPage }        from "@/pages/professional/ClientsPage";
 import { QueuePage }          from "@/pages/professional/queue/QueuePage";
 import { ReviewsPage }        from "@/pages/professional/ReviewsPage";
+import { StatsPage }          from "@/pages/professional/StatsPage";
 
 // Panel superadmin
 import { AdminDashboard }    from "@/pages/superadmin/AdminDashboard";
@@ -52,6 +53,7 @@ import { SecretaryDashboardPage }  from "@/pages/secretary/SecretaryDashboardPag
 import { SecretaryNewAppointment } from "@/pages/secretary/SecretaryNewAppointment";
 import { SecretaryClientsPage }    from "@/pages/secretary/SecretaryClientsPage";
 import { SecretaryQueuePage }      from "@/pages/secretary/SecretaryQueuePage";
+import { SecretaryTomorrowPage }   from "@/pages/secretary/SecretaryTomorrowPage";
 import { OrganizationsPage } from "./pages/superadmin/OrganizationsPage";
 
 export default function App() {
@@ -82,6 +84,7 @@ export default function App() {
         <Route path="horarios"    element={<SchedulePage />} />
         <Route path="clientes"    element={<ClientsPage />} />
         <Route path="resenas"     element={<ReviewsPage />} />
+        <Route path="estadisticas" element={<StatsPage />} />
         <Route path="nueva-cita"  element={<NewAppointmentPage />} />
         <Route path="perfil"      element={<ProfilePage />} />
       </Route>
@@ -93,6 +96,7 @@ export default function App() {
         </ProtectedRoute>
       }>
         <Route index              element={<SecretaryDashboardPage />} />
+        <Route path="manana"      element={<SecretaryTomorrowPage />} />
         <Route path="nueva-cita"  element={<SecretaryNewAppointment />} />
         <Route path="cola"        element={<SecretaryQueuePage />} />
         <Route path="clientes"    element={<SecretaryClientsPage />} />
