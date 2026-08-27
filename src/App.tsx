@@ -12,6 +12,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // Auth
+import { LandingPage }        from "@/pages/LandingPage";
 import { LoginPage }          from "@/pages/auth/LoginPage";
 import { ProtectedRoute }     from "@/pages/auth/ProtectedRoute";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
@@ -109,8 +110,8 @@ export default function App() {
         <Route path="planes"        element={<PlansPage />} />
       </Route>
 
-      {/* ── Redirects ─────────────────────────────────────────────────── */}
-      <Route path="/"  element={<Navigate to="/login" replace />} />
+      {/* ── Landing y redirects ───────────────────────────────────────── */}
+      <Route path="/"  element={<LandingPage />} />
       <Route path="*"  element={<Navigate to="/login" replace />} />
     </Routes>
   );
