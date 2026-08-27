@@ -14,6 +14,7 @@ const MENU = [
   { path: "/panel/servicios", label: "Servicios",     icon: "🩺", end: false },
   { path: "/panel/horarios",  label: "Horarios",      icon: "🕐", end: false },
   { path: "/panel/clientes",  label: "Clientes",      icon: "👥", end: false },
+  { path: "/panel/resenas",   label: "Reseñas",       icon: "⭐", end: false },
   { path: "/panel/perfil",    label: "Perfil",        icon: "⚙️",  end: false },
 ];
 

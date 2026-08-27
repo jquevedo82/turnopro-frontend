@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isValidEmail, isValidPhone } from './validation';
+import { isValidEmail, isValidPhone, isValidFullName } from './validation';
 
 describe('isValidEmail', () => {
   it('acepta email válido', () => {
@@ -40,5 +40,37 @@ describe('isValidPhone', () => {
 
   it('rechaza string con letras', () => {
     expect(isValidPhone('+54abc12345')).toBe(false);
+  });
+});
+
+describe('isValidFullName', () => {
+  it('acepta nombre y apellido simples', () => {
+    expect(isValidFullName('Juan García')).toBe(true);
+  });
+
+  it('acepta apellido compuesto con guion en cualquier posición', () => {
+    expect(isValidFullName('Ana-María Pérez')).toBe(true);
+    expect(isValidFullName('García-López Juan')).toBe(true);
+  });
+
+  it('acepta apóstrofe en el apellido', () => {
+    expect(isValidFullName("Conor O'Brien")).toBe(true);
+  });
+
+  it('acepta nombre compuesto de más de dos palabras', () => {
+    expect(isValidFullName('De La Cruz')).toBe(true);
+    expect(isValidFullName('María José García')).toBe(true);
+  });
+
+  it('rechaza una sola palabra', () => {
+    expect(isValidFullName('Juan')).toBe(false);
+  });
+
+  it('rechaza números o símbolos sueltos al final', () => {
+    expect(isValidFullName('Juan García123')).toBe(false);
+  });
+
+  it('rechaza string vacío', () => {
+    expect(isValidFullName('')).toBe(false);
   });
 });

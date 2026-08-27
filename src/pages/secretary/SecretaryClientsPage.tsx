@@ -3,10 +3,10 @@
  * Lista de clientes del profesional activo.
  * Responsivo mobile-first — misma estructura que ClientsPage del profesional.
  */
-import { useQuery }    from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAuthStore, useActiveProfessional } from "@/store/auth.store";
 import { clientsApi }  from "@/api/clients.api";
-import { PageLoader }  from "@/components/ui/Spinner";
+import { PageLoader, Spinner } from "@/components/ui/Spinner";
 import { formatDateShort } from "@/utils/dates";
 import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 
@@ -15,11 +15,18 @@ export const SecretaryClientsPage = () => {
   const activeProfessional   = useActiveProfessional();
   const vc = useVerticalConfig(activeProfessional?.professionalType);
 
-  const { data: clients = [], isLoading } = useQuery({
-    queryKey: ["clients", activeProfessionalId],
-    queryFn:  () => clientsApi.getForProfessional(activeProfessionalId!),
-    enabled:  !!activeProfessionalId,
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey:          ["clients", activeProfessionalId],
+    queryFn:           ({ pageParam }) => clientsApi.getForProfessional(activeProfessionalId!, pageParam),
+    initialPageParam:  1,
+    getNextPageParam:  (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, p) => sum + p.items.length, 0);
+      return loaded < lastPage.total ? allPages.length + 1 : undefined;
+    },
+    enabled: !!activeProfessionalId,
   });
+  const clients = data?.pages.flatMap((p) => p.items) ?? [];
+  const total   = data?.pages[0]?.total ?? 0;
 
   if (!activeProfessionalId) {
     return (
@@ -42,7 +49,7 @@ export const SecretaryClientsPage = () => {
             <span className="font-medium text-gray-600">{activeProfessional?.name}</span>
           </p>
         </div>
-        <span className="text-sm text-gray-400">{clients.length} registrados</span>
+        <span className="text-sm text-gray-400">{total} registrados</span>
       </div>
 
       <div className="card">
@@ -81,6 +88,13 @@ export const SecretaryClientsPage = () => {
           ))
         )}
       </div>
+      {hasNextPage && (
+        <div className="text-center mt-4">
+          <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="btn btn-outline">
+            {isFetchingNextPage ? <><Spinner size="sm" /> Cargando...</> : "Cargar más"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

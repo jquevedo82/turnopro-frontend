@@ -10,6 +10,15 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/auth.store";
 
+// Sin esto, si VITE_API_URL falta en Vercel el fallback "/api" relativo apunta al propio
+// frontend (no existe ahí) — todos los requests fallan con 404 silenciosos, sin ningún
+// error que indique la causa real.
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  throw new Error(
+    "VITE_API_URL no está configurada. Definila en las variables de entorno de Vercel (debe terminar en /api)."
+  );
+}
+
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const api = axios.create({
@@ -36,6 +45,14 @@ api.interceptors.response.use(
       if (hasToken) {
         useAuthStore.getState().logout();
       }
+    }
+    // Sin esto, err.message es el genérico de axios ("Request failed with status
+    // code 400") — el mensaje real que arma el backend (ej. "El horario ya no está
+    // disponible") queda solo en err.response.data.message, invisible para el usuario
+    // en los lugares que muestran error?.message directo (BookingForm, etc.)
+    const backendMessage = err.response?.data?.message;
+    if (backendMessage) {
+      err.message = Array.isArray(backendMessage) ? backendMessage.join(', ') : backendMessage;
     }
     return Promise.reject(err);
   }

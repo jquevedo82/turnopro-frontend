@@ -14,6 +14,7 @@ import { today } from "@/utils/dates";
 import toast from "@/utils/toast";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { useVerticalConfig } from "@/hooks/useVerticalConfig";
+import { NAME_PATTERN } from "@/utils/validation";
 
 interface FormData {
   clientName:  string;
@@ -92,7 +93,7 @@ export const NewAppointmentPage = () => {
             <input {...register("clientName", {
               required: "Requerido",
               pattern: {
-                value: /^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]+\s+[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]+/,
+                value: NAME_PATTERN,
                 message: "Ingresá al menos un nombre y un apellido",
               },
             })}
@@ -107,6 +108,7 @@ export const NewAppointmentPage = () => {
             <PhoneInput
               value={watch("clientPhone") ?? ""}
               onChange={(v) => setValue("clientPhone", v, { shouldDirty: true })}
+              defaultCountryCode={user?.country ?? undefined}
               required
             />
             {errors.clientPhone && <p className="form-error">{errors.clientPhone.message}</p>}

@@ -24,6 +24,12 @@ export const COUNTRIES: Country[] = [
     digitHint: "10 u 11 dígitos (fijo o móvil)",
   },
   {
+    code: "+57", flag: "🇨🇴", name: "Colombia",
+    hint: "300 123 4567",
+    minDigits: 10, maxDigits: 10,
+    digitHint: "10 dígitos (ej: 3001234567)",
+  },
+  {
     code: "+58", flag: "🇻🇪", name: "Venezuela",
     hint: "412 555 6666",
     minDigits: 10, maxDigits: 10,
@@ -49,33 +55,37 @@ interface PhoneInputProps {
   className?: string;
   disabled?:  boolean;
   required?:  boolean;
+  /** Código de país a preseleccionar cuando `value` está vacío (ej: el país del
+   *  profesional en su página de reserva). Si no se pasa, arranca en Argentina. */
+  defaultCountryCode?: string;
 }
 
 /** Extrae el código de país y el número local de un valor guardado */
-const parsePhone = (value: string): { countryCode: string; localNumber: string } => {
-  if (!value) return { countryCode: "+54", localNumber: "" };
+const parsePhone = (value: string, fallbackCode = "+54"): { countryCode: string; localNumber: string } => {
+  const fallback = COUNTRIES.some(c => c.code === fallbackCode) ? fallbackCode : "+54";
+  if (!value) return { countryCode: fallback, localNumber: "" };
   for (const c of COUNTRIES) {
     if (value.startsWith(c.code)) {
       return { countryCode: c.code, localNumber: value.slice(c.code.length).trim() };
     }
   }
-  return { countryCode: "+54", localNumber: value };
+  return { countryCode: fallback, localNumber: value };
 };
 
 export const PhoneInput = ({
-  value, onChange, className = "", disabled = false, required = false,
+  value, onChange, className = "", disabled = false, required = false, defaultCountryCode,
 }: PhoneInputProps) => {
-  const parsed = parsePhone(value);
+  const parsed = parsePhone(value, defaultCountryCode);
 
   const [countryCode, setCountryCode] = useState(parsed.countryCode);
   const [localNumber, setLocalNumber] = useState(parsed.localNumber);
   const [error, setError]             = useState<string | null>(null);
 
   useEffect(() => {
-    const p = parsePhone(value);
+    const p = parsePhone(value, defaultCountryCode);
     setCountryCode(p.countryCode);
     setLocalNumber(p.localNumber);
-  }, [value]);
+  }, [value, defaultCountryCode]);
 
   const country = COUNTRIES.find(c => c.code === countryCode) ?? COUNTRIES[0];
 

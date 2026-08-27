@@ -9,13 +9,14 @@ import { useForm } from "react-hook-form";
 import { PageLoader } from "@/components/ui/Spinner";
 import toast from "@/utils/toast";
 import { useEffect, useState, useRef } from "react";
-import { PhoneInput } from "@/components/ui/PhoneInput";
+import { PhoneInput, COUNTRIES } from "@/components/ui/PhoneInput";
 
 interface ProfileForm {
   name:               string;
   profession:         string;
   phone:              string;
   whatsappPhone:      string;
+  country:            string;
   slogan:             string;
   bio:                string;
   address:            string;
@@ -65,6 +66,7 @@ export const ProfilePage = () => {
       profession:         prof.profession         ?? "",
       phone:              prof.phone              ?? "",
       whatsappPhone:      prof.whatsappPhone      ?? "",
+      country:            prof.country            ?? "",
       slogan:             prof.slogan             ?? "",
       bio:                prof.bio                ?? "",
       address:            prof.address            ?? "",
@@ -156,6 +158,7 @@ export const ProfilePage = () => {
               <PhoneInput
                 value={watch("phone") ?? ""}
                 onChange={(v) => setValue("phone", v, { shouldDirty: true })}
+                defaultCountryCode={watch("country") || undefined}
               />
             </div>
             <div>
@@ -163,8 +166,21 @@ export const ProfilePage = () => {
               <PhoneInput
                 value={watch("whatsappPhone") ?? ""}
                 onChange={(v) => setValue("whatsappPhone", v, { shouldDirty: true })}
+                defaultCountryCode={watch("country") || undefined}
               />
               <p className="text-xs text-gray-400 mt-1">📲 A este número te llegan los avisos de nuevas citas</p>
+            </div>
+            <div>
+              <label className="form-label">País</label>
+              <select {...register("country")} className="form-input">
+                <option value="">Seleccionar país</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">
+                Define con qué código de país arranca el teléfono para el paciente que reserva en tu página
+              </p>
             </div>
             <div>
               <label className="form-label">Email público</label>

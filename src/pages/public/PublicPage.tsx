@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import { usePublicProfile, usePublicServices } from "@/hooks/usePublic";
 import { useCreateAppointment } from "@/hooks/useAppointments";
 import { useAvailableDays, useSlots } from "@/hooks/useAvailability";
+import { usePublicReviews } from "@/hooks/useReviews";
 import { PageLoader } from "@/components/ui/Spinner";
 import { optimizedCloudinaryUrl } from "@/utils/images";
 import { ServiceSelector } from "./components/ServiceSelector";
@@ -21,6 +22,7 @@ export const PublicPage = () => {
   const { slug = "" } = useParams<{ slug: string }>();
   const { data: professional, isLoading, error } = usePublicProfile(slug);
   const { data: services = [] } = usePublicServices(slug);
+  const { data: reviews = [] } = usePublicReviews(slug);
 
   const [step, setStep]         = useState(1);
   const [service, setService]   = useState<Service | null>(null);
@@ -152,6 +154,24 @@ export const PublicPage = () => {
       {/* Booking area */}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-8">
 
+        {/* Reseñas */}
+        {reviews.length > 0 && (
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Opiniones</h2>
+            <div className="space-y-3">
+              {reviews.map((r) => (
+                <div key={r.id} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-gray-800">{r.reviewerName}</span>
+                    <span className="text-amber-500 text-sm">{"⭐".repeat(r.rating)}</span>
+                  </div>
+                  {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Paso 1 */}
         <section>
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Elegí tu servicio</h2>
@@ -203,6 +223,8 @@ export const PublicPage = () => {
               onSubmit={handleBook}
               loading={createAppt.isPending}
               error={createAppt.error?.message}
+              defaultCountryCode={professional.country ?? undefined}
+              professionalType={professional.professionalType}
             />
           </section>
         )}

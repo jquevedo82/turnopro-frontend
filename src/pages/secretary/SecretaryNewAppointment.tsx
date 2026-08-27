@@ -138,6 +138,7 @@ export const SecretaryNewAppointment = () => {
             <PhoneInput
               value={watch("clientPhone") ?? ""}
               onChange={(v) => setValue("clientPhone", v, { shouldDirty: true })}
+              defaultCountryCode={activeProfessional?.country ?? undefined}
               required
             />
             {errors.clientPhone && <p className="form-error">{errors.clientPhone.message}</p>}

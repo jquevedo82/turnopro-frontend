@@ -7,11 +7,13 @@ export interface Professional {
   isActive: boolean; autoConfirm: boolean; slotDurationMinutes: number; bufferMinutes: number
   minAdvanceHours: number; maxAdvanceDays: number; cancellationHours: number; pendingExpiryHours: number; arrivalToleranceMinutes: number; createdAt: string
   professionalType?: 'health' | 'beauty' | 'wellness' | 'other'
+  country?: string | null // '+54' | '+57' | '+58' — default del selector de país en el teléfono del cliente
 }
 export interface Service { id: number; professionalId: number; name: string; description: string; durationMinutes: number; bufferMinutes: number | null; isActive: boolean }
 export interface ProfessionalSchedule { id: number; professionalId: number; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }
 export interface ScheduleException { id: number; professionalId: number; date: string; isClosed: boolean; customStartTime: string | null; customEndTime: string | null; reason: string }
 export interface Client { id: number; professionalId: number; name: string; email: string; phone: string; createdAt: string }
+export interface PaginatedClients { items: Client[]; total: number }
 export type AppointmentStatus =
   | "pending" | "confirmed" | "reconfirmed"
   | "arrived" | "in_progress"
@@ -33,6 +35,36 @@ export interface PublicQueueEntry {
   status:   "arrived" | "in_progress";
 }
 
+// ── Reseñas ──────────────────────────────────────────────────────────────────
+
+export type ReviewStatus = "invitado" | "pendiente" | "publicada" | "rechazada";
+
+/** Invitación abierta por token — GET /reviews/token/:token */
+export interface ReviewInvite {
+  reviewerName: string;
+  status:       ReviewStatus;
+  professional: { name: string };
+}
+
+/** Reseña publicada, tal como la ve el público — GET /public/:slug/reviews */
+export interface PublicReview {
+  id:           number;
+  reviewerName: string; // Nombre completo o iniciales, ya redactado por el backend según el vertical
+  rating:       number;
+  comment:      string;
+  submittedAt:  string;
+}
+
+/** Reseña tal como la ve el profesional al moderar — GET /reviews */
+export interface ReviewAdmin {
+  id:           number;
+  reviewerName: string;
+  rating:       number | null;
+  comment:      string | null;
+  status:       ReviewStatus;
+  submittedAt:  string | null;
+}
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 /** Profesional reducido que devuelve el login de secretaria para popular el selector */
@@ -43,6 +75,7 @@ export interface SecretaryProfessional {
   slug:             string;
   avatar:           string | null;
   professionalType?: 'health' | 'beauty' | 'wellness' | 'other';
+  country?:         string | null;
 }
 
 export interface AuthUser {
@@ -53,6 +86,7 @@ export interface AuthUser {
   // Solo para profesionales
   slug?:            string;
   professionalType?: 'health' | 'beauty' | 'wellness' | 'other';
+  country?:         string | null;
   // Solo para secretarias
   organizationId?:  number;
   professionals?:   SecretaryProfessional[]; // lista para el selector "Trabajando como..."

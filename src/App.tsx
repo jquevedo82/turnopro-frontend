@@ -12,6 +12,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // Auth
+import { LandingPage }        from "@/pages/LandingPage";
 import { LoginPage }          from "@/pages/auth/LoginPage";
 import { ProtectedRoute }     from "@/pages/auth/ProtectedRoute";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
@@ -28,6 +29,7 @@ import { WaitingRoomPage }  from "@/pages/public/WaitingRoomPage";
 
 // Cliente (sin login — acceso por token)
 import { ClientAppointmentPage } from "@/pages/client/ClientAppointmentPage";
+import { ReviewPage } from "@/pages/public/ReviewPage";
 
 // Panel profesional
 import { DashboardPage }      from "@/pages/professional/dashboard/DashboardPage";
@@ -38,6 +40,7 @@ import { SchedulePage }       from "@/pages/professional/schedule/SchedulePage";
 import { ProfilePage }        from "@/pages/professional/profile/ProfilePage";
 import { ClientsPage }        from "@/pages/professional/ClientsPage";
 import { QueuePage }          from "@/pages/professional/queue/QueuePage";
+import { ReviewsPage }        from "@/pages/professional/ReviewsPage";
 
 // Panel superadmin
 import { AdminDashboard }    from "@/pages/superadmin/AdminDashboard";
@@ -60,6 +63,7 @@ export default function App() {
       <Route path="/reset-password"  element={<ResetPasswordPage />} />
       <Route path="/cita/:token"     element={<ClientAppointmentPage />} />
       <Route path="/cita/:token/cancelar" element={<ClientAppointmentPage autoCancel />} />
+      <Route path="/resena/:token"   element={<ReviewPage />} />
       {/* Página pública del profesional */}
       <Route path="/:slug"      element={<PublicPage />} />
       {/* Pantalla de sala de espera (TV / tablet en recepción) */}
@@ -77,6 +81,7 @@ export default function App() {
         <Route path="servicios"   element={<ServicesPage />} />
         <Route path="horarios"    element={<SchedulePage />} />
         <Route path="clientes"    element={<ClientsPage />} />
+        <Route path="resenas"     element={<ReviewsPage />} />
         <Route path="nueva-cita"  element={<NewAppointmentPage />} />
         <Route path="perfil"      element={<ProfilePage />} />
       </Route>
@@ -105,8 +110,8 @@ export default function App() {
         <Route path="planes"        element={<PlansPage />} />
       </Route>
 
-      {/* ── Redirects ─────────────────────────────────────────────────── */}
-      <Route path="/"  element={<Navigate to="/login" replace />} />
+      {/* ── Landing y redirects ───────────────────────────────────────── */}
+      <Route path="/"  element={<LandingPage />} />
       <Route path="*"  element={<Navigate to="/login" replace />} />
     </Routes>
   );
