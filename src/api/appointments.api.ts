@@ -1,5 +1,5 @@
 import { api } from "@/config/api";
-import type { Appointment, PublicQueueEntry } from "@/types";
+import type { Appointment, MonthlyStats, PublicQueueEntry } from "@/types";
 
 export const appointmentsApi = {
   create: (data: {
@@ -13,6 +13,10 @@ export const appointmentsApi = {
 
   getToday:    (date?: string) => api.get<Appointment[]>("/appointments/today",    { params: { date } }).then((r) => r.data),
   getTomorrow: ()              => api.get<Appointment[]>("/appointments/tomorrow").then((r) => r.data),
+  getStats:    ()              => api.get<MonthlyStats>("/appointments/stats").then((r) => r.data),
+
+  // ── Superadmin ──────────────────────────────────────────────────────────────
+  getAdminStats: () => api.get<{ totalCompleted: number }>("/appointments/admin-stats").then((r) => r.data),
 
   confirm:     (id: number) => api.post<Appointment>(`/appointments/${id}/confirm`).then((r) => r.data),
   complete:    (id: number) => api.post<Appointment>(`/appointments/${id}/complete`).then((r) => r.data),
@@ -39,6 +43,9 @@ export const appointmentsApi = {
 
   sendReminderForProfessional: (id: number, professionalId: number) =>
     api.post<Appointment>(`/appointments/${id}/resend-email`, {}, { params: { professionalId } }).then((r) => r.data),
+
+  markReminderForProfessional: (id: number, professionalId: number) =>
+    api.post<Appointment>(`/appointments/${id}/reminder`, {}, { params: { professionalId } }).then((r) => r.data),
 
   createForProfessional: (
     data: {

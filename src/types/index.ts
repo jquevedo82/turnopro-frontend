@@ -28,6 +28,16 @@ export interface Appointment {
   notes: string | null; createdAt: string; client: Client; service: Service; professional: Professional
 }
 
+/** Estadísticas del mes en curso — devuelto por GET /appointments/stats */
+export interface MonthlyStats {
+  month:      string; // 'YYYY-MM'
+  completed:  number;
+  cancelled:  number;
+  noShow:     number;
+  noShowRate: number; // porcentaje 0-100
+  topService: { name: string; count: number } | null;
+}
+
 /** Entrada de la cola pública — devuelta por GET /public/:slug/queue */
 export interface PublicQueueEntry {
   position: number;

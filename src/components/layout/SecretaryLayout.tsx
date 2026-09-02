@@ -125,6 +125,7 @@ export const SecretaryLayout = () => {
         <nav className="flex-1 p-3 space-y-1">
           {[
             { to: "/secretaria", label: "Agenda", icon: "📅", end: true },
+            { to: "/secretaria/manana", label: "Mañana", icon: "🌅" },
             { to: "/secretaria/nueva-cita", label: "Nueva cita", icon: "➕" },
             { to: "/secretaria/cola", label: "Sala de espera", icon: "🪑" },
             { to: "/secretaria/clientes", label: "Clientes", icon: "👥" },
