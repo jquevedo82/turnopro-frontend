@@ -7,7 +7,7 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 
-const MENU = [
+const BASE_MENU = [
   { path: "/panel",           label: "Hoy",          icon: "📅", end: true  },
   { path: "/panel/manana",    label: "Mañana",        icon: "🌅", end: false },
   { path: "/panel/cola",      label: "Sala espera",   icon: "🪑", end: false },
@@ -19,10 +19,19 @@ const MENU = [
   { path: "/panel/perfil",    label: "Perfil",        icon: "⚙️",  end: false },
 ];
 
+// "Pendientes" solo tiene sentido si el profesional NO auto-confirma — con
+// autoConfirm=true ninguna cita llega a quedar en PENDING, la pestaña estaría
+// siempre vacía. Se inserta después de "Mañana" (mismo grupo: qué mirar hoy).
+const PENDING_ITEM = { path: "/panel/pendientes", label: "Pendientes", icon: "🕓", end: false };
+
 export const ProfessionalLayout = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [sideOpen, setSideOpen] = useState(false);
+
+  const MENU = user?.autoConfirm === false
+    ? [BASE_MENU[0], BASE_MENU[1], PENDING_ITEM, ...BASE_MENU.slice(2)]
+    : BASE_MENU;
 
   const handleLogout = () => { logout(); navigate("/login"); };
 

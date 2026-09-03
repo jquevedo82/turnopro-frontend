@@ -23,7 +23,18 @@ export const formatDateShort = (dateStr: string): string => {
   return d.toLocaleDateString("es-ES", { day:"numeric", month:"short", year:"numeric" });
 };
 
-export const toYMD = (date: Date): string => date.toISOString().split("T")[0];
+// OJO: NO usar date.toISOString() acá — convierte a UTC, y en Venezuela (UTC-4)
+// cualquier hora desde las 20:00 en adelante ya cae en el día siguiente en UTC.
+// today() (usada como fecha por defecto en Dashboard, Cola, Nueva cita, etc. en
+// 8 lugares) devolvía "mañana" en vez de "hoy" durante esas horas — el profesional
+// veía "Agenda de hoy" pero en realidad consultaba el día siguiente, y una cita
+// pendiente de HOY no aparecía en ningún lado. Se arma con los getters locales.
+export const toYMD = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
 
 export const today = (): string => toYMD(new Date());
 
