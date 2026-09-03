@@ -1,5 +1,5 @@
 import { api } from "@/config/api";
-import type { Appointment, MonthlyStats, PublicQueueEntry } from "@/types";
+import type { Appointment, AppointmentStatus, MonthlyStats, PublicQueueEntry } from "@/types";
 
 export const appointmentsApi = {
   create: (data: {
@@ -13,7 +13,7 @@ export const appointmentsApi = {
 
   getToday:    (date?: string) => api.get<Appointment[]>("/appointments/today",    { params: { date } }).then((r) => r.data),
   getTomorrow: ()              => api.get<Appointment[]>("/appointments/tomorrow").then((r) => r.data),
-  getPending:  ()              => api.get<Appointment[]>("/appointments/pending").then((r) => r.data),
+  getUpcoming: (status?: AppointmentStatus) => api.get<Appointment[]>("/appointments/upcoming", { params: { status } }).then((r) => r.data),
   getStats:    ()              => api.get<MonthlyStats>("/appointments/stats").then((r) => r.data),
 
   // ── Superadmin ──────────────────────────────────────────────────────────────
@@ -33,8 +33,8 @@ export const appointmentsApi = {
   getTomorrowForProfessional: (professionalId: number) =>
     api.get<Appointment[]>("/appointments/tomorrow", { params: { professionalId } }).then((r) => r.data),
 
-  getPendingForProfessional: (professionalId: number) =>
-    api.get<Appointment[]>("/appointments/pending", { params: { professionalId } }).then((r) => r.data),
+  getUpcomingForProfessional: (professionalId: number, status?: AppointmentStatus) =>
+    api.get<Appointment[]>("/appointments/upcoming", { params: { professionalId, status } }).then((r) => r.data),
 
   confirmForProfessional:  (id: number, professionalId: number) =>
     api.post<Appointment>(`/appointments/${id}/confirm`,     {}, { params: { professionalId } }).then((r) => r.data),

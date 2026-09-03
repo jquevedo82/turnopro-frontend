@@ -11,7 +11,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  useToday, usePending, useMarkReminder,
+  useToday, useUpcoming, useMarkReminder,
   useCancelAppointment, useCompleteAppointment, useConfirmAppointment,
 } from "@/hooks/useAppointments";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -21,13 +21,21 @@ import { useAuthStore } from "@/store/auth.store";
 import { appointmentsApi } from "@/api/appointments.api";
 import { professionalsApi } from "@/api/professionals.api";
 import toast from "@/utils/toast";
-import type { Appointment } from "@/types";
+import type { Appointment, AppointmentStatus } from "@/types";
 import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 import { isValidEmail, isValidPhone } from "@/utils/validation";
 import { waUrl } from "@/utils/whatsapp";
 
-type ViewMode = "day" | "pending";
+type ViewMode = "day" | "upcoming";
 type StatusFilter = "all" | "confirmed" | "pending" | "cancelled";
+type UpcomingFilter = "all" | "pending" | "confirmed" | "reconfirmed";
+
+const UPCOMING_FILTERS: { key: UpcomingFilter; label: string }[] = [
+  { key: "all",         label: "Todas" },
+  { key: "pending",     label: "Pendientes" },
+  { key: "confirmed",   label: "Confirmadas" },
+  { key: "reconfirmed", label: "Reconfirmadas" },
+];
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -45,18 +53,22 @@ const Modal = ({ title, onClose, children }: { title: string; onClose: () => voi
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export const AgendaPage = () => {
-  const [viewMode, setViewMode]     = useState<ViewMode>("day");
-  const [date, setDate]             = useState(today());
+  const [viewMode, setViewMode]         = useState<ViewMode>("day");
+  const [date, setDate]                 = useState(today());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [upcomingFilter, setUpcomingFilter] = useState<UpcomingFilter>("all");
   const { user }        = useAuthStore();
   const vc              = useVerticalConfig();
   const navigate         = useNavigate();
 
   const { data: dayAppointments = [], isLoading: loadingDay } = useToday(date);
   const {
-    data: pendingAppointments = [], isLoading: loadingPending,
-    isError: pendingIsError, error: pendingError, refetch: refetchPending,
-  } = usePending();
+    data: upcomingAppointments = [], isLoading: loadingUpcoming,
+    isError: upcomingIsError, error: upcomingError, refetch: refetchUpcoming,
+  } = useUpcoming(upcomingFilter === "all" ? undefined : upcomingFilter as AppointmentStatus);
+  // Badge de "pendientes" en el botón del toggle — independiente del filtro que
+  // esté activo ahora, para que siga avisando aunque estés mirando "Confirmadas".
+  const { data: pendingBadge = [] } = useUpcoming("pending" as AppointmentStatus);
 
   const cancelAppt   = useCancelAppointment();
   const completeAppt = useCompleteAppointment();
@@ -76,8 +88,8 @@ export const AgendaPage = () => {
     : statusFilter === "pending"   ? dayAppointments.filter((a) => a.status === "pending")
     : dayAppointments.filter((a) => a.status === "cancelled");
 
-  const visibleAppointments = viewMode === "pending" ? pendingAppointments : dayFiltered;
-  const isLoading           = viewMode === "pending" ? loadingPending : loadingDay;
+  const visibleAppointments = viewMode === "upcoming" ? upcomingAppointments : dayFiltered;
+  const isLoading           = viewMode === "upcoming" ? loadingUpcoming : loadingDay;
 
   const shiftDay = (deltaDays: number) => {
     const d = new Date(date + "T12:00:00");
@@ -132,15 +144,15 @@ export const AgendaPage = () => {
         </div>
       </div>
 
-      {/* Toggle de vista: por día vs. pendientes de cualquier fecha */}
+      {/* Toggle de vista: por día vs. todas las fechas (con filtro de estado propio) */}
       <div className="flex gap-2 mb-4">
         <button onClick={() => setViewMode("day")}
           className={`btn btn-sm ${viewMode === "day" ? "btn-primary" : "btn-outline"}`}>
           📅 Por día
         </button>
-        <button onClick={() => setViewMode("pending")}
-          className={`btn btn-sm ${viewMode === "pending" ? "btn-primary" : "btn-outline"}`}>
-          🕓 Pendientes{pendingAppointments.length > 0 ? ` (${pendingAppointments.length})` : ""}
+        <button onClick={() => setViewMode("upcoming")}
+          className={`btn btn-sm ${viewMode === "upcoming" ? "btn-primary" : "btn-outline"}`}>
+          🕓 Todas las fechas{pendingBadge.length > 0 ? ` · ${pendingBadge.length} pendientes` : ""}
         </button>
       </div>
 
@@ -175,33 +187,46 @@ export const AgendaPage = () => {
         </>
       )}
 
-      {viewMode === "pending" && (
-        <p className="text-xs text-gray-400 mb-4">
-          {vc.appointmentLabelPlural} que esperan tu aceptación, de cualquier día — ordenadas por la más próxima
-        </p>
+      {viewMode === "upcoming" && (
+        <>
+          {/* Filtro de estado — mismo mecanismo que "Pendientes" pero para cualquiera:
+              no hace falta recorrer el calendario día por día para saber, por ejemplo,
+              cuáles ya están confirmadas. */}
+          <div className="flex gap-2 mb-3 flex-wrap">
+            {UPCOMING_FILTERS.map((f) => (
+              <button key={f.key} onClick={() => setUpcomingFilter(f.key)}
+                className={`btn btn-xs ${upcomingFilter === f.key ? "btn-primary" : "btn-outline"}`}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mb-4">
+            {UPCOMING_FILTERS.find((f) => f.key === upcomingFilter)?.label} de cualquier día, desde hoy — ordenadas por la más próxima
+          </p>
+        </>
       )}
 
       {/* Lista */}
-      {isLoading ? <PageLoader /> : viewMode === "pending" && pendingIsError ? (
+      {isLoading ? <PageLoader /> : viewMode === "upcoming" && upcomingIsError ? (
         <div className="card py-12 text-center">
           <div className="text-4xl mb-3">⚠️</div>
-          <p className="text-sm text-gray-600 font-medium">No se pudieron cargar las pendientes</p>
-          {pendingError && <p className="text-xs text-gray-400 mt-1">{(pendingError as any)?.response?.data?.message || (pendingError as Error).message}</p>}
-          <button onClick={() => refetchPending()} className="btn btn-outline btn-sm mt-4">Reintentar</button>
+          <p className="text-sm text-gray-600 font-medium">No se pudieron cargar las citas</p>
+          {upcomingError && <p className="text-xs text-gray-400 mt-1">{(upcomingError as any)?.response?.data?.message || (upcomingError as Error).message}</p>}
+          <button onClick={() => refetchUpcoming()} className="btn btn-outline btn-sm mt-4">Reintentar</button>
         </div>
       ) : (
         <div className="card">
           {visibleAppointments.length === 0 ? (
             <div className="py-12 text-center text-gray-400">
-              <div className="text-4xl mb-3">{viewMode === "pending" ? "✨" : "📭"}</div>
+              <div className="text-4xl mb-3">{viewMode === "upcoming" ? "✨" : "📭"}</div>
               <p className="font-medium text-sm">
-                {viewMode === "pending" ? `No hay ${vc.appointmentLabelPlural.toLowerCase()} pendientes` : "No hay citas para este día"}
+                {viewMode === "upcoming" ? "No hay citas que coincidan con este filtro" : "No hay citas para este día"}
               </p>
             </div>
           ) : (
             visibleAppointments.map((appt) => (
               <AppointmentRow key={appt.id} appt={appt}
-                showDate={viewMode === "pending"}
+                showDate={viewMode === "upcoming"}
                 isPending={actionsPending}
                 onConfirm={() => { if (window.confirm(`¿Confirmar la ${vc.appointmentLabel.toLowerCase()} de ${appt.client?.name}?`)) confirmAppt.mutate(appt.id); }}
                 onCancel={()  => { if (window.confirm(`¿Cancelar la ${vc.appointmentLabel.toLowerCase()} de ${appt.client?.name}? No se puede deshacer.`)) cancelAppt.mutate(appt.id); }}
