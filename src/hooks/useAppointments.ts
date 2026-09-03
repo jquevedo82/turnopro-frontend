@@ -4,6 +4,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { appointmentsApi } from "@/api/appointments.api";
+import type { AppointmentStatus } from "@/types";
 import toast from "../utils/toast";
 
 // ── Hooks para el panel profesional (sin cambios) ─────────────────────────────
@@ -14,8 +15,8 @@ export const useToday = (date?: string) =>
 export const useTomorrow = () =>
   useQuery({ queryKey: ["appointments", "tomorrow"], queryFn: appointmentsApi.getTomorrow });
 
-export const usePending = () =>
-  useQuery({ queryKey: ["appointments", "pending"], queryFn: appointmentsApi.getPending });
+export const useUpcoming = (status?: AppointmentStatus) =>
+  useQuery({ queryKey: ["appointments", "upcoming", status], queryFn: () => appointmentsApi.getUpcoming(status) });
 
 export const useStats = () =>
   useQuery({ queryKey: ["appointments", "stats"], queryFn: appointmentsApi.getStats });
@@ -97,10 +98,10 @@ export const useTomorrowForProfessional = (professionalId: number | null) =>
     enabled:  !!professionalId,
   });
 
-export const usePendingForProfessional = (professionalId: number | null) =>
+export const useUpcomingForProfessional = (professionalId: number | null, status?: AppointmentStatus) =>
   useQuery({
-    queryKey: ["appointments", "pending", professionalId],
-    queryFn:  () => appointmentsApi.getPendingForProfessional(professionalId!),
+    queryKey: ["appointments", "upcoming", professionalId, status],
+    queryFn:  () => appointmentsApi.getUpcomingForProfessional(professionalId!, status),
     enabled:  !!professionalId,
   });
 

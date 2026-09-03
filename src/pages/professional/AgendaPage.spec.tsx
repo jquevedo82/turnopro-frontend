@@ -6,7 +6,7 @@ import type { Appointment } from '@/types';
 
 vi.mock('@/api/appointments.api', () => ({
   appointmentsApi: {
-    getToday: vi.fn(), getPending: vi.fn(),
+    getToday: vi.fn(), getUpcoming: vi.fn(),
     confirm: vi.fn(), cancel: vi.fn(), complete: vi.fn(), markReminder: vi.fn(),
   },
 }));
@@ -44,10 +44,12 @@ const renderPage = () => {
   );
 };
 
+// AgendaPage llama a useUpcoming() dos veces: una para la lista visible (según el
+// filtro activo) y otra fija en "pending" para el badge del botón del toggle.
 describe('AgendaPage — vista unificada (reemplaza Hoy/Mañana/Pendientes)', () => {
   it('muestra la agenda del día por defecto', async () => {
     vi.mocked(appointmentsApi.getToday).mockResolvedValueOnce([todayAppt]);
-    vi.mocked(appointmentsApi.getPending).mockResolvedValueOnce([]);
+    vi.mocked(appointmentsApi.getUpcoming).mockResolvedValue([]);
 
     renderPage();
 
@@ -55,42 +57,56 @@ describe('AgendaPage — vista unificada (reemplaza Hoy/Mañana/Pendientes)', ()
     expect(screen.getByText('📅 Agenda')).toBeInTheDocument();
   });
 
-  it('el toggle "Pendientes" muestra citas de cualquier fecha, con la fecha visible en cada fila', async () => {
+  it('el toggle "Todas las fechas" muestra citas de cualquier fecha, con la fecha visible en cada fila', async () => {
     vi.mocked(appointmentsApi.getToday).mockResolvedValue([todayAppt]);
-    vi.mocked(appointmentsApi.getPending).mockResolvedValue([pendingApptOtherDay]);
+    vi.mocked(appointmentsApi.getUpcoming).mockResolvedValue([pendingApptOtherDay]);
 
     renderPage();
 
     await waitFor(() => expect(screen.getByText('Ana López')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /🕓 Pendientes/i }));
+    fireEvent.click(screen.getByRole('button', { name: /todas las fechas/i }));
 
     await waitFor(() => expect(screen.getByText('Bruno Díaz')).toBeInTheDocument());
     expect(screen.queryByText('Ana López')).not.toBeInTheDocument();
   });
 
-  it('el filtro de estado "Pendientes" del día oculta las citas confirmadas', async () => {
+  it('el filtro "Confirmadas" de la vista "todas las fechas" vuelve a pedir el listado con ese estado', async () => {
+    vi.mocked(appointmentsApi.getToday).mockResolvedValue([]);
+    vi.mocked(appointmentsApi.getUpcoming).mockResolvedValue([]);
+
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: /todas las fechas/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmadas' }));
+
+    await waitFor(() => expect(appointmentsApi.getUpcoming).toHaveBeenCalledWith('confirmed'));
+  });
+
+  it('el chip "Pendientes" del día oculta las citas confirmadas', async () => {
     vi.mocked(appointmentsApi.getToday).mockResolvedValue([todayAppt]);
-    vi.mocked(appointmentsApi.getPending).mockResolvedValue([]);
+    vi.mocked(appointmentsApi.getUpcoming).mockResolvedValue([]);
 
     renderPage();
 
     await waitFor(() => expect(screen.getByText('Ana López')).toBeInTheDocument());
-    // El chip "Pendientes" del día (no el toggle superior) filtra por status=pending;
-    // como todayAppt está confirmed, debería desaparecer de la lista.
+    // En modo "día" (el default), "Pendientes" solo existe como chip de estado —
+    // el filtro por status=pending del día, no el toggle de otras fechas.
     const pendingChip = screen.getAllByText('Pendientes')[0];
     fireEvent.click(pendingChip);
 
     await waitFor(() => expect(screen.getByText('No hay citas para este día')).toBeInTheDocument());
   });
 
-  it('muestra un error real (no una lista vacía) si la consulta de pendientes falla', async () => {
+  it('muestra un error real (no una lista vacía) si la consulta de "todas las fechas" falla', async () => {
     vi.mocked(appointmentsApi.getToday).mockResolvedValue([]);
-    vi.mocked(appointmentsApi.getPending).mockRejectedValueOnce(new Error('Network Error'));
+    vi.mocked(appointmentsApi.getUpcoming).mockImplementation((status?: string) =>
+      status === 'pending' ? Promise.resolve([]) : Promise.reject(new Error('Network Error')),
+    );
 
     renderPage();
 
     await waitFor(() => expect(screen.getByText('No hay citas para este día')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /🕓 Pendientes/i }));
+    fireEvent.click(screen.getByRole('button', { name: /todas las fechas/i }));
 
     await waitFor(() => expect(screen.getByText(/no se pudieron cargar/i)).toBeInTheDocument());
   });
@@ -98,7 +114,7 @@ describe('AgendaPage — vista unificada (reemplaza Hoy/Mañana/Pendientes)', ()
   it('aceptar una cita pendiente llama a confirm con su id', async () => {
     const pendingToday: Appointment = { ...todayAppt, id: 3, status: 'pending' };
     vi.mocked(appointmentsApi.getToday).mockResolvedValue([pendingToday]);
-    vi.mocked(appointmentsApi.getPending).mockResolvedValue([]);
+    vi.mocked(appointmentsApi.getUpcoming).mockResolvedValue([]);
     vi.mocked(appointmentsApi.confirm).mockResolvedValueOnce({ ...pendingToday, status: 'confirmed' });
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
