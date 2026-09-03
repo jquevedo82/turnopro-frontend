@@ -49,6 +49,17 @@ describe('PendingPage', () => {
     await waitFor(() => expect(screen.getByText(/no hay/i)).toBeInTheDocument());
   });
 
+  it('muestra un error (no "no hay pendientes") si la consulta falla', async () => {
+    // Bug real reportado 2026-09-03: un endpoint todavía desplegándose (404) se veía
+    // IDÉNTICO a "no hay pendientes" por el fallback `data = []`. Ahora se distingue.
+    vi.mocked(appointmentsApi.getPending).mockRejectedValueOnce(new Error('Not Found'));
+
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText(/no se pudieron cargar/i)).toBeInTheDocument());
+    expect(screen.queryByText(/no hay.*pendientes/i)).not.toBeInTheDocument();
+  });
+
   it('aceptar llama a confirm con el id de la cita', async () => {
     vi.mocked(appointmentsApi.getPending).mockResolvedValue([apptSept8]);
     vi.mocked(appointmentsApi.confirm).mockResolvedValueOnce({ ...apptSept8, status: 'confirmed' });

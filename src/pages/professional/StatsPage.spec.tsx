@@ -48,4 +48,16 @@ describe('StatsPage', () => {
 
     await waitFor(() => expect(screen.getByText(/no hay datos suficientes/i)).toBeInTheDocument());
   });
+
+  it('muestra un error (no un spinner infinito) si la consulta falla', async () => {
+    // Bug real reportado 2026-09-03: antes de este fix, un error acá dejaba el
+    // spinner girando para siempre porque isLoading pasaba a false pero stats
+    // seguía undefined, y la condición no distinguía "falló" de "sin datos".
+    vi.mocked(appointmentsApi.getStats).mockRejectedValueOnce(new Error('Network Error'));
+
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText(/no se pudieron cargar/i)).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /reintentar/i })).toBeInTheDocument();
+  });
 });

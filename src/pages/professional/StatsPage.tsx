@@ -18,10 +18,29 @@ const formatMonth = (ym: string) => {
 };
 
 export const StatsPage = () => {
-  const { data: stats, isLoading } = useStats();
+  const { data: stats, isLoading, isError, error, refetch } = useStats();
   const vc = useVerticalConfig();
 
-  if (isLoading || !stats) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
+
+  // Antes de este fix, un error acá (401/403/500/red caída) dejaba el spinner
+  // girando para siempre — isLoading pasaba a false pero stats seguía undefined,
+  // así que "cargando o sin datos" nunca distinguía "falló" de "todavía no llegó".
+  if (isError || !stats) {
+    return (
+      <div className="page">
+        <div className="section-hd">
+          <h1 className="page-title">📊 Estadísticas</h1>
+        </div>
+        <div className="card py-12 text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <p className="text-sm text-gray-600 font-medium">No se pudieron cargar las estadísticas</p>
+          {error && <p className="text-xs text-gray-400 mt-1">{(error as any)?.response?.data?.message || (error as Error).message}</p>}
+          <button onClick={() => refetch()} className="btn btn-outline btn-sm mt-4">Reintentar</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page">

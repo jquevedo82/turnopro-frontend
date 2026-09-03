@@ -13,7 +13,7 @@ import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 import type { Appointment } from "@/types";
 
 export const PendingPage = () => {
-  const { data: appointments = [], isLoading } = usePending();
+  const { data: appointments = [], isLoading, isError, error, refetch } = usePending();
   const confirmAppt = useConfirmAppointment();
   const cancelAppt  = useCancelAppointment();
   const vc = useVerticalConfig();
@@ -31,7 +31,17 @@ export const PendingPage = () => {
         </div>
       </div>
 
-      {appointments.length === 0 ? (
+      {isError ? (
+        // Antes de este fix, una falla acá (endpoint recién desplegándose, red caída)
+        // se veía IDÉNTICA a "no hay pendientes" — el fallback `= []` de arriba lo
+        // disfrazaba de lista vacía en vez de mostrar que algo falló.
+        <div className="card py-12 text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <p className="text-sm text-gray-600 font-medium">No se pudieron cargar las pendientes</p>
+          {error && <p className="text-xs text-gray-400 mt-1">{(error as any)?.response?.data?.message || (error as Error).message}</p>}
+          <button onClick={() => refetch()} className="btn btn-outline btn-sm mt-4">Reintentar</button>
+        </div>
+      ) : appointments.length === 0 ? (
         <div className="card py-12 text-center text-gray-400">
           <div className="text-4xl mb-3">✨</div>
           <p className="font-medium text-sm">No hay {vc.appointmentLabelPlural.toLowerCase()} pendientes</p>
