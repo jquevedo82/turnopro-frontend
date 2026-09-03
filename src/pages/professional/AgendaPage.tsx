@@ -28,14 +28,25 @@ import { waUrl } from "@/utils/whatsapp";
 
 type ViewMode = "day" | "upcoming";
 type StatusFilter = "all" | "confirmed" | "pending" | "cancelled";
-type UpcomingFilter = "all" | "pending" | "confirmed" | "reconfirmed";
+type UpcomingFilter = "all" | "pending" | "confirmed" | "reconfirmed" | "cancelled";
 
 const UPCOMING_FILTERS: { key: UpcomingFilter; label: string }[] = [
   { key: "all",         label: "Todas" },
   { key: "pending",     label: "Pendientes" },
   { key: "confirmed",   label: "Confirmadas" },
   { key: "reconfirmed", label: "Reconfirmadas" },
+  { key: "cancelled",   label: "Canceladas" },
 ];
+
+// "martes 15/09/2026" — el nombre del día solo no alcanza cuando se listan citas
+// de fechas distintas (vista "todas las fechas"), hace falta la fecha completa.
+const formatDateWithWeekday = (dateStr: string): string => {
+  const d = new Date(dateStr + "T12:00:00");
+  const weekday = d.toLocaleDateString("es-ES", { weekday: "long" });
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${weekday} ${dd}/${mm}/${d.getFullYear()}`;
+};
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -382,18 +393,16 @@ const AppointmentRow = ({ appt, showDate, isPending, onConfirm, onCancel, onComp
   return (
     <>
       <div className="px-4 py-3.5 border-b border-gray-100 last:border-0">
+        {showDate && (
+          <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1.5 capitalize">
+            {formatDateWithWeekday(appt.date)}
+          </div>
+        )}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex-shrink-0 text-right">
-              {showDate && (
-                <div className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">
-                  {formatDate(appt.date).split(",")[0]}
-                </div>
-              )}
-              <span className="font-display text-base font-bold" style={{ color: "#0f2342" }}>
-                {appt.startTime?.substring(0, 5)}
-              </span>
-            </div>
+            <span className="font-display text-base font-bold flex-shrink-0" style={{ color: "#0f2342" }}>
+              {appt.startTime?.substring(0, 5)}
+            </span>
             <div className="min-w-0">
               <div className="font-semibold text-sm text-gray-900 truncate">{appt.client?.name}</div>
               {appt.service?.name && (
