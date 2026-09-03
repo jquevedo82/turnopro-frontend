@@ -1,13 +1,17 @@
 import { DAYS_SHORT } from "@/utils/dates";
+import { Spinner } from "@/components/ui/Spinner";
 
 const MONTHS_ES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 interface Props {
   year: number; month: number; availableDays: string[]; selected: string;
   onSelect: (d: string) => void; onPrev: () => void; onNext: () => void;
+  /** Mientras se consultan los días disponibles — sin esto, el grid se ve
+   *  igual que "sin días disponibles" durante la carga, que confunde. */
+  loading?: boolean;
 }
 
-export const BookingCalendar = ({ year, month, availableDays, selected, onSelect, onPrev, onNext }: Props) => {
+export const BookingCalendar = ({ year, month, availableDays, selected, onSelect, onPrev, onNext, loading = false }: Props) => {
   const today       = new Date().toISOString().split("T")[0];
   const firstDay    = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -20,29 +24,36 @@ export const BookingCalendar = ({ year, month, availableDays, selected, onSelect
         <span className="font-display font-semibold text-gray-800">{MONTHS_ES[month]} {year}</span>
         <button onClick={onNext} className="w-10 h-10 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 text-xl">›</button>
       </div>
-      <div className="grid grid-cols-7 px-2 pt-2 pb-3">
-        {DAYS_SHORT.map((d) => (
-          <div key={d} className="text-center py-1.5 text-xs font-semibold text-gray-400 uppercase">{d}</div>
-        ))}
-        {Array(firstDay).fill(null).map((_, i) => <div key={`e${i}`} />)}
-        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-          const dateStr = pad(day);
-          const avail   = availableDays.includes(dateStr);
-          const isSel   = selected === dateStr;
-          const isPast  = dateStr < today;
-          return (
-            <button key={day} disabled={!avail || isPast} onClick={() => onSelect(dateStr)}
-              className={`flex items-center justify-center mx-0.5 my-0.5 rounded-xl text-sm font-medium transition-all
-                aspect-square min-h-[40px] ${
-                isSel              ? "bg-blue-600 text-white font-bold shadow-sm" :
-                avail && !isPast   ? "text-gray-900 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100" :
-                                     "text-gray-200 cursor-default"
-              }`}>
-              {day}
-            </button>
-          );
-        })}
-      </div>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center gap-3 py-10">
+          <Spinner size="md" />
+          <p className="text-sm text-gray-400">Buscando días disponibles...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-7 px-2 pt-2 pb-3">
+          {DAYS_SHORT.map((d) => (
+            <div key={d} className="text-center py-1.5 text-xs font-semibold text-gray-400 uppercase">{d}</div>
+          ))}
+          {Array(firstDay).fill(null).map((_, i) => <div key={`e${i}`} />)}
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+            const dateStr = pad(day);
+            const avail   = availableDays.includes(dateStr);
+            const isSel   = selected === dateStr;
+            const isPast  = dateStr < today;
+            return (
+              <button key={day} disabled={!avail || isPast} onClick={() => onSelect(dateStr)}
+                className={`flex items-center justify-center mx-0.5 my-0.5 rounded-xl text-sm font-medium transition-all
+                  aspect-square min-h-[40px] ${
+                  isSel              ? "bg-blue-600 text-white font-bold shadow-sm" :
+                  avail && !isPast   ? "text-gray-900 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100" :
+                                       "text-gray-200 cursor-default"
+                }`}>
+                {day}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

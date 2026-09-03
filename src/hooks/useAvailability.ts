@@ -20,3 +20,8 @@ export const useAvailableDays = (
     queryFn:  () => availabilityApi.getAvailableDays(professionalId, year, month, serviceId),
     enabled:  !!professionalId,
   });
+
+// isFetching (no solo isLoading): también queremos mostrar el estado de carga al
+// cambiar de servicio o de mes, no solo la primera vez — sin esto el calendario
+// se ve como si no hubiera ningún día disponible mientras la consulta está en
+// curso, en vez de verse "cargando" (reportado como confuso en conexiones lentas).

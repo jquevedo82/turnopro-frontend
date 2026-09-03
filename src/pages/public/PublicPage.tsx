@@ -37,7 +37,7 @@ export const PublicPage = () => {
 
   // ── Cambio: se pasa service?.id para que los días disponibles
   //    se recalculen según la duración del servicio elegido
-  const { data: availableDays = [] } = useAvailableDays(
+  const { data: availableDays = [], isFetching: loadingDays } = useAvailableDays(
     professional?.id ?? 0,
     calYear,
     calMonth,
@@ -189,7 +189,7 @@ export const PublicPage = () => {
             </div>
             <BookingCalendar
               year={calYear} month={calMonth}
-              availableDays={availableDays} selected={date}
+              availableDays={availableDays} selected={date} loading={loadingDays}
               onSelect={(d) => { setDate(d); setSlot(""); setStep(3); }}
               onPrev={() => { if (calMonth === 1) { setCalYear(y => y-1); setCalMonth(12); } else setCalMonth(m => m-1); }}
               onNext={() => { if (calMonth === 12) { setCalYear(y => y+1); setCalMonth(1); } else setCalMonth(m => m+1); }}
