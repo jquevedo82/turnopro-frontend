@@ -82,6 +82,30 @@ describe('AgendaPage — vista unificada (reemplaza Hoy/Mañana/Pendientes)', ()
     await waitFor(() => expect(appointmentsApi.getUpcoming).toHaveBeenCalledWith('confirmed'));
   });
 
+  it('tiene un filtro "Canceladas" en la vista "todas las fechas"', async () => {
+    vi.mocked(appointmentsApi.getToday).mockResolvedValue([]);
+    vi.mocked(appointmentsApi.getUpcoming).mockResolvedValue([]);
+
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: /todas las fechas/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Canceladas' }));
+
+    await waitFor(() => expect(appointmentsApi.getUpcoming).toHaveBeenCalledWith('cancelled'));
+  });
+
+  it('en "todas las fechas" muestra el día de la semana Y la fecha completa, no solo el nombre del día', async () => {
+    vi.mocked(appointmentsApi.getToday).mockResolvedValue([]);
+    vi.mocked(appointmentsApi.getUpcoming).mockResolvedValue([pendingApptOtherDay]); // fecha: 2026-09-15, un martes
+
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: /todas las fechas/i }));
+
+    await waitFor(() => expect(screen.getByText('Bruno Díaz')).toBeInTheDocument());
+    expect(screen.getByText(/martes.*15\/09\/2026/i)).toBeInTheDocument();
+  });
+
   it('el chip "Pendientes" del día oculta las citas confirmadas', async () => {
     vi.mocked(appointmentsApi.getToday).mockResolvedValue([todayAppt]);
     vi.mocked(appointmentsApi.getUpcoming).mockResolvedValue([]);
