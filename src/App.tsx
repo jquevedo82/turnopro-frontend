@@ -32,9 +32,8 @@ import { ClientAppointmentPage } from "@/pages/client/ClientAppointmentPage";
 import { ReviewPage } from "@/pages/public/ReviewPage";
 
 // Panel profesional
-import { DashboardPage }      from "@/pages/professional/dashboard/DashboardPage";
+import { AgendaPage }         from "@/pages/professional/AgendaPage";
 import { NewAppointmentPage } from "@/pages/professional/NewAppointmentPage";
-import { TomorrowPage }       from "@/pages/professional/dashboard/TomorrowPage";
 import { ServicesPage }       from "@/pages/professional/services/ServicesPage";
 import { SchedulePage }       from "@/pages/professional/schedule/SchedulePage";
 import { ProfilePage }        from "@/pages/professional/profile/ProfilePage";
@@ -42,7 +41,6 @@ import { ClientsPage }        from "@/pages/professional/ClientsPage";
 import { QueuePage }          from "@/pages/professional/queue/QueuePage";
 import { ReviewsPage }        from "@/pages/professional/ReviewsPage";
 import { StatsPage }          from "@/pages/professional/StatsPage";
-import { PendingPage }        from "@/pages/professional/PendingPage";
 
 // Panel superadmin
 import { AdminDashboard }    from "@/pages/superadmin/AdminDashboard";
@@ -78,9 +76,7 @@ export default function App() {
           <ProfessionalLayout />
         </ProtectedRoute>
       }>
-        <Route index              element={<DashboardPage />} />
-        <Route path="manana"      element={<TomorrowPage />} />
-        <Route path="pendientes" element={<PendingPage />} />
+        <Route index              element={<AgendaPage />} />
         <Route path="cola"        element={<QueuePage />} />
         <Route path="servicios"   element={<ServicesPage />} />
         <Route path="horarios"    element={<SchedulePage />} />

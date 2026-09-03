@@ -20,20 +20,16 @@ const renderLayout = () =>
     </MemoryRouter>,
   );
 
-describe('ProfessionalLayout — pestaña Pendientes condicional', () => {
-  it('no muestra "Pendientes" si el profesional auto-confirma', () => {
-    mockUser.mockReturnValue({ name: 'Dra. García', autoConfirm: true });
+describe('ProfessionalLayout — menú', () => {
+  it('muestra "Agenda" como primera entrada, sin "Mañana" ni "Pendientes" por separado', () => {
+    // Hoy + Mañana + Pendientes se unificaron en una sola pantalla (AgendaPage)
+    // con navegador de fecha + filtro de estado + toggle de pendientes.
+    mockUser.mockReturnValue({ name: 'Dra. García', autoConfirm: false });
 
     renderLayout();
 
+    expect(screen.getAllByText('Agenda').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Mañana')).toHaveLength(0);
     expect(screen.queryAllByText('Pendientes')).toHaveLength(0);
-  });
-
-  it('muestra "Pendientes" si el profesional NO auto-confirma', () => {
-    mockUser.mockReturnValue({ name: 'Dr. Pérez', autoConfirm: false });
-
-    renderLayout();
-
-    expect(screen.getAllByText('Pendientes').length).toBeGreaterThan(0);
   });
 });

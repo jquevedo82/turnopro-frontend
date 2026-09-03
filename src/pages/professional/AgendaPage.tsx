@@ -1,15 +1,22 @@
 /**
- * DashboardPage.tsx
- * - Compartir página: email vía backend / WhatsApp con modal de número
- * - Reenviar al paciente: email vía backend (reminder) / WhatsApp con modal
- * - Fix dropdown: usa portal fixed para no quedar cortado por overflow-hidden
+ * AgendaPage.tsx — Reemplaza DashboardPage (Hoy), TomorrowPage (Mañana) y
+ * PendingPage (Pendientes), que eran tres pantallas separadas resolviendo
+ * en realidad dos ejes distintos (fecha y estado) de forma inconsistente:
+ * "Mañana" era solo un caso particular de "Hoy" con el selector en +1 día,
+ * y "Pendientes" cortaba por estado en vez de por fecha. Mismo patrón que
+ * usan Calendly/Booksy/Fresha/Doctoralia: una sola agenda con navegador de
+ * fecha + filtro de estado, más un modo aparte para ver pendientes de
+ * cualquier fecha sin tener que ir día por día.
  */
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToday, useCancelAppointment, useCompleteAppointment, useConfirmAppointment } from "@/hooks/useAppointments";
+import {
+  useToday, usePending, useMarkReminder,
+  useCancelAppointment, useCompleteAppointment, useConfirmAppointment,
+} from "@/hooks/useAppointments";
 import { StatusBadge } from "@/components/ui/Badge";
 import { PageLoader, Spinner } from "@/components/ui/Spinner";
-import { formatDate, today } from "@/utils/dates";
+import { formatDate, today, toYMD } from "@/utils/dates";
 import { useAuthStore } from "@/store/auth.store";
 import { appointmentsApi } from "@/api/appointments.api";
 import { professionalsApi } from "@/api/professionals.api";
@@ -18,6 +25,9 @@ import type { Appointment } from "@/types";
 import { useVerticalConfig } from "@/hooks/useVerticalConfig";
 import { isValidEmail, isValidPhone } from "@/utils/validation";
 import { waUrl } from "@/utils/whatsapp";
+
+type ViewMode = "day" | "pending";
+type StatusFilter = "all" | "confirmed" | "pending" | "cancelled";
 
 // ── Modal genérico ────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
@@ -34,27 +44,51 @@ const Modal = ({ title, onClose, children }: { title: string; onClose: () => voi
 );
 
 // ── Componente principal ──────────────────────────────────────────────────────
-export const DashboardPage = () => {
-  const [date, setDate]         = useState(today());
-  const { data: appointments = [], isLoading } = useToday(date);
-  const { user }                = useAuthStore();
-  const cancelAppt              = useCancelAppointment();
-  const completeAppt            = useCompleteAppointment();
-  const confirmAppt             = useConfirmAppointment();
+export const AgendaPage = () => {
+  const [viewMode, setViewMode]     = useState<ViewMode>("day");
+  const [date, setDate]             = useState(today());
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const { user }        = useAuthStore();
+  const vc              = useVerticalConfig();
+  const navigate         = useNavigate();
+
+  const { data: dayAppointments = [], isLoading: loadingDay } = useToday(date);
+  const {
+    data: pendingAppointments = [], isLoading: loadingPending,
+    isError: pendingIsError, error: pendingError, refetch: refetchPending,
+  } = usePending();
+
+  const cancelAppt   = useCancelAppointment();
+  const completeAppt = useCompleteAppointment();
+  const confirmAppt  = useConfirmAppointment();
+
+  const actionsPending = confirmAppt.isPending || cancelAppt.isPending || completeAppt.isPending;
+
+  const stats = {
+    total:     dayAppointments.filter((a) => !["cancelled", "expired"].includes(a.status)).length,
+    confirmed: dayAppointments.filter((a) => ["confirmed", "reconfirmed"].includes(a.status)).length,
+    pending:   dayAppointments.filter((a) => a.status === "pending").length,
+    cancelled: dayAppointments.filter((a) => a.status === "cancelled").length,
+  };
+
+  const dayFiltered = statusFilter === "all" ? dayAppointments
+    : statusFilter === "confirmed" ? dayAppointments.filter((a) => ["confirmed", "reconfirmed"].includes(a.status))
+    : statusFilter === "pending"   ? dayAppointments.filter((a) => a.status === "pending")
+    : dayAppointments.filter((a) => a.status === "cancelled");
+
+  const visibleAppointments = viewMode === "pending" ? pendingAppointments : dayFiltered;
+  const isLoading           = viewMode === "pending" ? loadingPending : loadingDay;
+
+  const shiftDay = (deltaDays: number) => {
+    const d = new Date(date + "T12:00:00");
+    d.setDate(d.getDate() + deltaDays);
+    setDate(toYMD(d));
+  };
 
   // Modales de compartir página
   const [shareEmailModal, setShareEmailModal] = useState(false);
   const [shareWAModal, setShareWAModal]       = useState(false);
   const [shareMenuOpen, setShareMenuOpen]     = useState(false);
-  const navigate = useNavigate();
-
-  const stats = {
-    total:     appointments.filter((a) => !["cancelled","expired"].includes(a.status)).length,
-    confirmed: appointments.filter((a) => ["confirmed","reconfirmed"].includes(a.status)).length,
-    cancelled: appointments.filter((a) => a.status === "cancelled").length,
-    pending:   appointments.filter((a) => a.status === "pending").length,
-  };
-
   const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
 
   return (
@@ -62,18 +96,13 @@ export const DashboardPage = () => {
       {/* Header */}
       <div className="section-hd">
         <div>
-          <h1 className="page-title">📅 Agenda de hoy</h1>
-          <p className="text-xs text-gray-400 mt-0.5">{formatDate(date)}</p>
+          <h1 className="page-title">📅 Agenda</h1>
+          {viewMode === "day" && <p className="text-xs text-gray-400 mt-0.5">{formatDate(date)}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-            className="form-input text-sm hidden sm:block" style={{ width: "auto", minHeight: 40 }} />
-          {/* Nueva cita */}
-          <button onClick={() => navigate("/panel/nueva-cita")}
-            className="btn btn-primary btn-sm">
-            + Nueva cita
+          <button onClick={() => navigate("/panel/nueva-cita")} className="btn btn-primary btn-sm">
+            + Nueva {vc.appointmentLabel.toLowerCase()}
           </button>
-          {/* Compartir */}
           <div className="relative">
             <button onClick={() => setShareMenuOpen(!shareMenuOpen)} className="btn btn-outline btn-sm">
               🔗 <span className="hidden sm:inline">Compartir página</span>
@@ -103,41 +132,80 @@ export const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Fecha mobile */}
-      <div className="sm:hidden mb-4">
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="form-input text-sm w-full" />
+      {/* Toggle de vista: por día vs. pendientes de cualquier fecha */}
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setViewMode("day")}
+          className={`btn btn-sm ${viewMode === "day" ? "btn-primary" : "btn-outline"}`}>
+          📅 Por día
+        </button>
+        <button onClick={() => setViewMode("pending")}
+          className={`btn btn-sm ${viewMode === "pending" ? "btn-primary" : "btn-outline"}`}>
+          🕓 Pendientes{pendingAppointments.length > 0 ? ` (${pendingAppointments.length})` : ""}
+        </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        {[
-          { label: "Total",       value: stats.total,     color: "text-gray-900" },
-          { label: "Confirmadas", value: stats.confirmed, color: "text-blue-600"  },
-          { label: "Pendientes",  value: stats.pending,   color: "text-amber-600" },
-          { label: "Canceladas",  value: stats.cancelled, color: "text-red-500"   },
-        ].map((s) => (
-          <div key={s.label} className="stat-card">
-            <div className="stat-label">{s.label}</div>
-            <div className={`stat-value ${s.color}`}>{s.value}</div>
+      {viewMode === "day" && (
+        <>
+          {/* Navegador de fecha */}
+          <div className="flex items-center gap-2 mb-4">
+            <button onClick={() => shiftDay(-1)} className="btn btn-outline btn-sm" aria-label="Día anterior">‹</button>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+              className="form-input text-sm" style={{ width: "auto", minHeight: 40 }} />
+            <button onClick={() => shiftDay(1)} className="btn btn-outline btn-sm" aria-label="Día siguiente">›</button>
+            {date !== today() && (
+              <button onClick={() => setDate(today())} className="btn btn-outline btn-sm">Hoy</button>
+            )}
           </div>
-        ))}
-      </div>
 
-      {/* Lista de citas */}
-      {isLoading ? <PageLoader /> : (
+          {/* Chips de estado — clickeables, filtran la lista del día */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            {[
+              { key: "all" as const,       label: "Total",       value: stats.total,     color: "text-gray-900" },
+              { key: "confirmed" as const, label: "Confirmadas", value: stats.confirmed, color: "text-blue-600" },
+              { key: "pending" as const,   label: "Pendientes",  value: stats.pending,   color: "text-amber-600" },
+              { key: "cancelled" as const, label: "Canceladas",  value: stats.cancelled, color: "text-red-500" },
+            ].map((s) => (
+              <button key={s.key} onClick={() => setStatusFilter(s.key)}
+                className={`stat-card text-left transition-all ${statusFilter === s.key ? "ring-2 ring-blue-400" : ""}`}>
+                <div className="stat-label">{s.label}</div>
+                <div className={`stat-value ${s.color}`}>{s.value}</div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {viewMode === "pending" && (
+        <p className="text-xs text-gray-400 mb-4">
+          {vc.appointmentLabelPlural} que esperan tu aceptación, de cualquier día — ordenadas por la más próxima
+        </p>
+      )}
+
+      {/* Lista */}
+      {isLoading ? <PageLoader /> : viewMode === "pending" && pendingIsError ? (
+        <div className="card py-12 text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <p className="text-sm text-gray-600 font-medium">No se pudieron cargar las pendientes</p>
+          {pendingError && <p className="text-xs text-gray-400 mt-1">{(pendingError as any)?.response?.data?.message || (pendingError as Error).message}</p>}
+          <button onClick={() => refetchPending()} className="btn btn-outline btn-sm mt-4">Reintentar</button>
+        </div>
+      ) : (
         <div className="card">
-          {appointments.length === 0 ? (
+          {visibleAppointments.length === 0 ? (
             <div className="py-12 text-center text-gray-400">
-              <div className="text-4xl mb-3">📭</div>
-              <p className="font-medium text-sm">No hay citas para este día</p>
+              <div className="text-4xl mb-3">{viewMode === "pending" ? "✨" : "📭"}</div>
+              <p className="font-medium text-sm">
+                {viewMode === "pending" ? `No hay ${vc.appointmentLabelPlural.toLowerCase()} pendientes` : "No hay citas para este día"}
+              </p>
             </div>
           ) : (
-            appointments.map((appt) => (
+            visibleAppointments.map((appt) => (
               <AppointmentRow key={appt.id} appt={appt}
-                isPending={confirmAppt.isPending || cancelAppt.isPending || completeAppt.isPending}
-                onConfirm={() => { if (window.confirm(`¿Confirmar la cita de ${appt.client?.name}?`)) confirmAppt.mutate(appt.id); }}
-                onCancel={()  => { if (window.confirm(`¿Cancelar la cita de ${appt.client?.name}? No se puede deshacer.`)) cancelAppt.mutate(appt.id); }}
-                onComplete={() => { if (window.confirm(`¿Marcar como completada la cita de ${appt.client?.name}?`)) completeAppt.mutate(appt.id); }}
+                showDate={viewMode === "pending"}
+                isPending={actionsPending}
+                onConfirm={() => { if (window.confirm(`¿Confirmar la ${vc.appointmentLabel.toLowerCase()} de ${appt.client?.name}?`)) confirmAppt.mutate(appt.id); }}
+                onCancel={()  => { if (window.confirm(`¿Cancelar la ${vc.appointmentLabel.toLowerCase()} de ${appt.client?.name}? No se puede deshacer.`)) cancelAppt.mutate(appt.id); }}
+                onComplete={() => { if (window.confirm(`¿Marcar como completada la ${vc.appointmentLabel.toLowerCase()} de ${appt.client?.name}?`)) completeAppt.mutate(appt.id); }}
               />
             ))
           )}
@@ -148,7 +216,6 @@ export const DashboardPage = () => {
       {shareEmailModal && user?.slug && (
         <ShareEmailModal
           professionalName={user.name ?? ""}
-          slug={user.slug}
           onClose={() => setShareEmailModal(false)}
         />
       )}
@@ -167,7 +234,7 @@ export const DashboardPage = () => {
 };
 
 // ── Modal: compartir por email ────────────────────────────────────────────────
-const ShareEmailModal = ({ professionalName, slug, onClose }: { professionalName: string; slug: string; onClose: () => void }) => {
+const ShareEmailModal = ({ professionalName, onClose }: { professionalName: string; onClose: () => void }) => {
   const { user }              = useAuthStore();
   const vc                    = useVerticalConfig(user?.professionalType);
   const [email,   setEmail]   = useState("");
@@ -257,31 +324,53 @@ const ShareWAModal = ({ professionalName, slug, appUrl, onClose }: { professiona
 };
 
 // ── Fila de cita ──────────────────────────────────────────────────────────────
-const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
+const AppointmentRow = ({ appt, showDate, isPending, onConfirm, onCancel, onComplete }: {
   appt:       Appointment;
+  showDate:   boolean;
   isPending:  boolean;
   onConfirm:  () => void;
   onCancel:   () => void;
   onComplete: () => void;
 }) => {
   const vc = useVerticalConfig();
+  const { user } = useAuthStore();
+  const markReminder = useMarkReminder();
   const [resendOpen, setResendOpen] = useState(false);
   const [resendEmailModal, setResendEmailModal] = useState(false);
-  const [resendWAModal,    setResendWAModal]    = useState(false);
-  const isDone = ["cancelled","expired","completed","no_show"].includes(appt.status);
+  const isDone = ["cancelled", "expired", "completed", "no_show"].includes(appt.status);
   const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+
+  const handleResendWA = () => {
+    const phone = appt.client?.phone?.replace(/[^0-9+]/g, "") ?? "";
+    const dateStr = formatDate(appt.date);
+    const text =
+      `Hola ${appt.client?.name}! 👋 Te recordamos tu ${vc.appointmentLabel.toLowerCase()}:\n\n` +
+      `📅 ${dateStr}\n⏰ ${appt.startTime?.substring(0, 5)}hs\n👨‍⚕️ ${user?.name}\n\n` +
+      `¿Vas a asistir?\n\n` +
+      `✅ Confirmar → ${appUrl}/cita/${appt.token}/reconfirmar\n` +
+      `❌ Cancelar  → ${appUrl}/cita/${appt.token}/cancelar`;
+    window.open(waUrl(phone, text), "_blank");
+    markReminder.mutate(appt.id);
+    setResendOpen(false);
+  };
 
   return (
     <>
       <div className="px-4 py-3.5 border-b border-gray-100 last:border-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <span className="font-display text-base font-bold flex-shrink-0" style={{ color: "#0f2342" }}>
-              {appt.startTime?.substring(0,5)}
-            </span>
+            <div className="flex-shrink-0 text-right">
+              {showDate && (
+                <div className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">
+                  {formatDate(appt.date).split(",")[0]}
+                </div>
+              )}
+              <span className="font-display text-base font-bold" style={{ color: "#0f2342" }}>
+                {appt.startTime?.substring(0, 5)}
+              </span>
+            </div>
             <div className="min-w-0">
               <div className="font-semibold text-sm text-gray-900 truncate">{appt.client?.name}</div>
-              {/* Servicio + duración ── agregado */}
               {appt.service?.name && (
                 <div className="text-xs text-gray-400 truncate">
                   🩺 {appt.service.name}
@@ -298,7 +387,7 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
         <div className="flex items-center justify-between mt-2 gap-2">
           <span className="text-xs text-gray-400 truncate">📱 {appt.client?.phone}</span>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {["confirmed","reconfirmed"].includes(appt.status) && (
+            {["confirmed", "reconfirmed"].includes(appt.status) && (
               <>
                 <button onClick={onComplete} disabled={isPending} className="btn btn-xs btn-success disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? "..." : "✓ Listo"}</button>
                 <button onClick={onCancel}   disabled={isPending} className="btn btn-xs btn-danger  disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? "..." : "✕"}</button>
@@ -310,39 +399,31 @@ const AppointmentRow = ({ appt, isPending, onConfirm, onCancel, onComplete }: {
                 <button onClick={onCancel}  disabled={isPending} className="btn btn-xs btn-danger  disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? "..." : "✕"}</button>
               </>
             )}
-            {/* Botón reenviar */}
             {!isDone && (
               <button onClick={() => setResendOpen(!resendOpen)}
                 className={`btn btn-xs btn-outline ${resendOpen ? "bg-gray-100" : ""}`}
-                title={`Reenviar al ${vc.clientLabel.toLowerCase()}`}>
+                title={`Reenviar recordatorio al ${vc.clientLabel.toLowerCase()}`}>
                 📤
               </button>
             )}
           </div>
         </div>
 
-        {/* Sub-panel reenviar */}
         {resendOpen && (
-          <div className="mt-2 ml-10 flex gap-2 flex-wrap">
-            <button
-              onClick={() => { setResendOpen(false); setResendEmailModal(true); }}
-              className="btn btn-xs btn-outline">
+          <div className="mt-2 ml-10 flex gap-2 flex-wrap items-center">
+            <button onClick={() => { setResendOpen(false); setResendEmailModal(true); }} className="btn btn-xs btn-outline">
               📧 Reenviar Email
             </button>
-            <button
-              onClick={() => { setResendOpen(false); setResendWAModal(true); }}
-              className="btn btn-xs btn-outline">
+            <button onClick={handleResendWA} className="btn btn-xs btn-wa">
               💬 Reenviar WhatsApp
             </button>
+            {appt.reminderSent && <span className="text-xs text-teal-600">✓ Enviado</span>}
           </div>
         )}
       </div>
 
       {resendEmailModal && (
         <ResendEmailModal appt={appt} onClose={() => setResendEmailModal(false)} />
-      )}
-      {resendWAModal && (
-        <ResendWAModal appt={appt} appUrl={appUrl} onClose={() => setResendWAModal(false)} />
       )}
     </>
   );
@@ -380,7 +461,7 @@ const ResendEmailModal = ({ appt, onClose }: { appt: Appointment; onClose: () =>
           <div className="bg-gray-50 rounded-xl p-4 space-y-1">
             <p className="text-sm font-medium text-gray-700">{appt.client?.name}</p>
             <p className="text-xs text-gray-400">📧 {appt.client?.email}</p>
-            <p className="text-xs text-gray-400">📅 {appt.date} a las {appt.startTime?.substring(0,5)}hs</p>
+            <p className="text-xs text-gray-400">📅 {appt.date} a las {appt.startTime?.substring(0, 5)}hs</p>
           </div>
           {error && <p className="form-error">{error}</p>}
           <button onClick={handleSend} disabled={loading} className="btn btn-primary btn-full">
@@ -388,53 +469,6 @@ const ResendEmailModal = ({ appt, onClose }: { appt: Appointment; onClose: () =>
           </button>
         </div>
       )}
-    </Modal>
-  );
-};
-
-// ── Modal: reenviar WhatsApp al paciente ──────────────────────────────────────
-const ResendWAModal = ({ appt, appUrl, onClose }: { appt: Appointment; appUrl: string; onClose: () => void }) => {
-  const [phone, setPhone] = useState(appt.client?.phone ?? "");
-  const [error, setError] = useState("");
-  const vc = useVerticalConfig();
-
-  const handleSend = () => {
-    if (!isValidPhone(phone)) { setError("Ingresá un número válido con código de país. Ej: +5491112345678"); return; }
-    const text =
-      `Hola ${appt.client?.name}! 👋\n\n` +
-      `Te recordamos tu cita:\n` +
-      `📅 *${appt.date}* a las *${appt.startTime?.substring(0,5)}hs*\n` +
-      `🩺 ${appt.service?.name}\n\n` +
-      `Ver y gestionar tu cita: ${appUrl}/cita/${appt.token}`;
-    window.open(waUrl(phone, text), "_blank");
-    onClose();
-  };
-
-  return (
-    <Modal title={`💬 Reenviar WhatsApp al ${vc.clientLabel.toLowerCase()}`} onClose={onClose}>
-      <div className="space-y-3">
-        <div className="bg-gray-50 rounded-xl p-4 space-y-1">
-          <p className="text-sm font-medium text-gray-700">{appt.client?.name}</p>
-          <p className="text-xs text-gray-400">📅 {appt.date} a las {appt.startTime?.substring(0,5)}hs</p>
-        </div>
-        <div>
-          <label className="form-label">Número de WhatsApp</label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => { setPhone(e.target.value); setError(""); }}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            className="form-input"
-            placeholder="+54 9 11 1234-5678"
-            autoFocus
-          />
-          {error && <p className="form-error">{error}</p>}
-          <p className="text-xs text-gray-400 mt-1">Pre-cargado con el número del {vc.clientLabel.toLowerCase()}. Podés editarlo.</p>
-        </div>
-        <button onClick={handleSend} disabled={!phone} className="btn btn-success btn-full">
-          💬 Abrir WhatsApp
-        </button>
-      </div>
     </Modal>
   );
 };

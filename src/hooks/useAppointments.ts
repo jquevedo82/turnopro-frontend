@@ -54,7 +54,9 @@ export const useMarkReminder = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => appointmentsApi.markReminder(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["appointments", "tomorrow"] }),
+    // "appointments" a secas (no solo "tomorrow"): se usa desde la Agenda unificada,
+    // que puede estar mostrando cualquier fecha o la vista de pendientes.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["appointments"] }),
   });
 };
 
