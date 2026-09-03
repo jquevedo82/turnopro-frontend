@@ -97,6 +97,7 @@ export interface AuthUser {
   slug?:            string;
   professionalType?: 'health' | 'beauty' | 'wellness' | 'other';
   country?:         string | null;
+  autoConfirm?:     boolean; // decide si el panel muestra la pestaña "Pendientes"
   // Solo para secretarias
   organizationId?:  number;
   professionals?:   SecretaryProfessional[]; // lista para el selector "Trabajando como..."

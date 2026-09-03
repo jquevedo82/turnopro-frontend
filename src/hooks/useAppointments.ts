@@ -14,6 +14,9 @@ export const useToday = (date?: string) =>
 export const useTomorrow = () =>
   useQuery({ queryKey: ["appointments", "tomorrow"], queryFn: appointmentsApi.getTomorrow });
 
+export const usePending = () =>
+  useQuery({ queryKey: ["appointments", "pending"], queryFn: appointmentsApi.getPending });
+
 export const useStats = () =>
   useQuery({ queryKey: ["appointments", "stats"], queryFn: appointmentsApi.getStats });
 
@@ -89,6 +92,13 @@ export const useTomorrowForProfessional = (professionalId: number | null) =>
   useQuery({
     queryKey: ["appointments", "tomorrow", professionalId],
     queryFn:  () => appointmentsApi.getTomorrowForProfessional(professionalId!),
+    enabled:  !!professionalId,
+  });
+
+export const usePendingForProfessional = (professionalId: number | null) =>
+  useQuery({
+    queryKey: ["appointments", "pending", professionalId],
+    queryFn:  () => appointmentsApi.getPendingForProfessional(professionalId!),
     enabled:  !!professionalId,
   });
 

@@ -42,6 +42,7 @@ import { ClientsPage }        from "@/pages/professional/ClientsPage";
 import { QueuePage }          from "@/pages/professional/queue/QueuePage";
 import { ReviewsPage }        from "@/pages/professional/ReviewsPage";
 import { StatsPage }          from "@/pages/professional/StatsPage";
+import { PendingPage }        from "@/pages/professional/PendingPage";
 
 // Panel superadmin
 import { AdminDashboard }    from "@/pages/superadmin/AdminDashboard";
@@ -79,6 +80,7 @@ export default function App() {
       }>
         <Route index              element={<DashboardPage />} />
         <Route path="manana"      element={<TomorrowPage />} />
+        <Route path="pendientes" element={<PendingPage />} />
         <Route path="cola"        element={<QueuePage />} />
         <Route path="servicios"   element={<ServicesPage />} />
         <Route path="horarios"    element={<SchedulePage />} />

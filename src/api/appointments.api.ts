@@ -13,6 +13,7 @@ export const appointmentsApi = {
 
   getToday:    (date?: string) => api.get<Appointment[]>("/appointments/today",    { params: { date } }).then((r) => r.data),
   getTomorrow: ()              => api.get<Appointment[]>("/appointments/tomorrow").then((r) => r.data),
+  getPending:  ()              => api.get<Appointment[]>("/appointments/pending").then((r) => r.data),
   getStats:    ()              => api.get<MonthlyStats>("/appointments/stats").then((r) => r.data),
 
   // ── Superadmin ──────────────────────────────────────────────────────────────
@@ -31,6 +32,9 @@ export const appointmentsApi = {
 
   getTomorrowForProfessional: (professionalId: number) =>
     api.get<Appointment[]>("/appointments/tomorrow", { params: { professionalId } }).then((r) => r.data),
+
+  getPendingForProfessional: (professionalId: number) =>
+    api.get<Appointment[]>("/appointments/pending", { params: { professionalId } }).then((r) => r.data),
 
   confirmForProfessional:  (id: number, professionalId: number) =>
     api.post<Appointment>(`/appointments/${id}/confirm`,     {}, { params: { professionalId } }).then((r) => r.data),
