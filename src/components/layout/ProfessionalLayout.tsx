@@ -7,9 +7,11 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 
-const BASE_MENU = [
-  { path: "/panel",           label: "Hoy",          icon: "📅", end: true  },
-  { path: "/panel/manana",    label: "Mañana",        icon: "🌅", end: false },
+// "Hoy" + "Mañana" + "Pendientes" se unificaron en una sola pantalla (AgendaPage) con
+// navegador de fecha + filtro de estado + toggle de pendientes — mismo patrón que usan
+// Calendly/Booksy/Fresha/Doctoralia (una agenda, no páginas separadas por fecha fija).
+const MENU = [
+  { path: "/panel",           label: "Agenda",       icon: "📅", end: true  },
   { path: "/panel/cola",      label: "Sala espera",   icon: "🪑", end: false },
   { path: "/panel/servicios", label: "Servicios",     icon: "🩺", end: false },
   { path: "/panel/horarios",  label: "Horarios",      icon: "🕐", end: false },
@@ -19,19 +21,10 @@ const BASE_MENU = [
   { path: "/panel/perfil",    label: "Perfil",        icon: "⚙️",  end: false },
 ];
 
-// "Pendientes" solo tiene sentido si el profesional NO auto-confirma — con
-// autoConfirm=true ninguna cita llega a quedar en PENDING, la pestaña estaría
-// siempre vacía. Se inserta después de "Mañana" (mismo grupo: qué mirar hoy).
-const PENDING_ITEM = { path: "/panel/pendientes", label: "Pendientes", icon: "🕓", end: false };
-
 export const ProfessionalLayout = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [sideOpen, setSideOpen] = useState(false);
-
-  const MENU = user?.autoConfirm === false
-    ? [BASE_MENU[0], BASE_MENU[1], PENDING_ITEM, ...BASE_MENU.slice(2)]
-    : BASE_MENU;
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
